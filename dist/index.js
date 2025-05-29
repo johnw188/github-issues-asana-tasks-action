@@ -74890,6 +74890,13 @@ async function issueToTask(payload) {
   // Get all comments if this is not an issue creation
   if (payload.action !== "opened") {
     try {
+      console.log("Fetching comments for issue:", {
+        owner: owner.login,
+        repo: repo.name,
+        issue_number: number,
+        hasGithubToken: !!process.env.GITHUB_TOKEN
+      });
+      
       const octokit = (0,github.getOctokit)(process.env.GITHUB_TOKEN);
       const { data: comments } = await octokit.rest.issues.listComments({
         owner: owner.login,
@@ -74897,11 +74904,22 @@ async function issueToTask(payload) {
         issue_number: number
       });
 
+      console.log(`Fetched ${comments.length} comments`);
+
       if (comments.length > 0) {
         conversationText += `---\n\n## Comments\n\n`;
         
         for (const comment of comments) {
-          conversationText += `### [@${comment.user.login}](${comment.user.html_url}) - ${new Date(comment.created_at).toLocaleString()}\n\n`;
+          console.log("Processing comment:", {
+            id: comment.id,
+            hasUser: !!comment.user,
+            userLogin: comment.user?.login,
+            created_at: comment.created_at
+          });
+          
+          const username = comment.user?.login || 'ghost';
+          const userUrl = comment.user?.html_url || `https://github.com/${username}`;
+          conversationText += `### [@${username}](${userUrl}) - ${new Date(comment.created_at).toLocaleString()}\n\n`;
           conversationText += `${comment.body}\n\n`;
           conversationText += `[View comment](${comment.html_url})\n\n`;
           conversationText += `---\n\n`;
@@ -74909,6 +74927,11 @@ async function issueToTask(payload) {
       }
     } catch (error) {
       console.error("Error fetching comments:", error);
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        response: error.response?.data
+      });
       conversationText += `\n\n_Error fetching comments from GitHub_\n`;
     }
   }
