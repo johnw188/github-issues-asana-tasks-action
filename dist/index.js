@@ -58797,7 +58797,7 @@ async function createTask(content, projectId, repository) {
     return result.data.permalink_url;
   } catch (error) {
     console.error(error.response.status, error.response.body);
-    return error.response.body;
+    throw error;
   }
 }
 
@@ -74837,6 +74837,9 @@ function renderMarkdown(rawMd) {
     .replace(/<p>/g, "")
     .replace(/<(\/?)h[123]>\s*/g, "<$1h1>")
     .replace(/<(\/?)h[456]>\s*/g, "<$1h2>")
+    .replace(/<input\s+type="checkbox"\s+disabled=""\s+checked=""\s*\/>/g, "[x]") // Replace checked checkboxes
+    .replace(/<input\s+type="checkbox"\s+disabled=""\s*\/>/g, "[ ]") // Replace unchecked checkboxes
+    .replace(/href="((?!https?:\/\/)[^"]+)"/g, 'href="https://$1"') // Add https:// to links without protocol
     .trim();
 
   console.log({
