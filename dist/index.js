@@ -74874,16 +74874,15 @@ async function issueToTask(payload) {
   console.log("issueToTask - full payload:", JSON.stringify(payload, null, 2));
   
   const { title, number, body, html_url, user, created_at, updated_at } = payload.issue;
-  const { owner, repo } = payload.repository;
+  const repository = payload.repository;
+  const owner = repository.owner;
+  const repoName = repository.name;
 
-  console.log("issueToTask - payload structure:", {
-    hasRepository: !!payload.repository,
-    hasOwner: !!owner,
-    hasRepo: !!repo,
-    ownerType: typeof owner,
-    repoType: typeof repo,
-    repositoryName: payload.repository?.name,
-    ownerLogin: owner?.login
+  console.log("issueToTask - extracted values:", {
+    repositoryName: repoName,
+    ownerLogin: owner.login,
+    issueNumber: number,
+    issueTitle: title
   });
 
   const name = `${title} #${number}`;
@@ -74904,7 +74903,7 @@ async function issueToTask(payload) {
     try {
       console.log("Fetching comments for issue:", {
         owner: owner.login,
-        repo: repo.name,
+        repo: repoName,
         issue_number: number,
         hasGithubToken: !!process.env.GITHUB_TOKEN
       });
@@ -74912,7 +74911,7 @@ async function issueToTask(payload) {
       const octokit = (0,github.getOctokit)(process.env.GITHUB_TOKEN);
       const { data: comments } = await octokit.rest.issues.listComments({
         owner: owner.login,
-        repo: repo.name,
+        repo: repoName,
         issue_number: number
       });
 
