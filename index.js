@@ -21,10 +21,22 @@ try {
 
   // Get inputs from action
   const projectId = core.getInput('asana_project_id');
-  process.env.ASANA_PAT = core.getInput('asana_pat');
+  const asanaPat = core.getInput('asana_pat');
+  const customFieldId = core.getInput('asana_custom_field_id');
+  const githubToken = core.getInput('github_token');
+  
+  // Debug logging
+  console.log('Input values:');
+  console.log('- asana_project_id:', projectId ? `${projectId.length} chars` : 'missing');
+  console.log('- asana_pat:', asanaPat ? `${asanaPat.length} chars` : 'missing');
+  console.log('- asana_custom_field_id:', customFieldId ? `${customFieldId.length} chars` : 'missing');
+  console.log('- github_token:', githubToken ? `${githubToken.length} chars` : 'missing');
+  
+  // Set environment variables
+  process.env.ASANA_PAT = asanaPat;
   process.env.ASANA_PROJECT_ID = projectId;
-  process.env.ASANA_CUSTOM_FIELD_ID = core.getInput('asana_custom_field_id');
-  process.env.GITHUB_TOKEN = core.getInput('github_token');
+  process.env.ASANA_CUSTOM_FIELD_ID = customFieldId;
+  process.env.GITHUB_TOKEN = githubToken;
   
   const issueSearchString = payload.issue?.html_url;
 

@@ -58435,10 +58435,22 @@ try {
 
   // Get inputs from action
   const projectId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('asana_project_id');
-  process.env.ASANA_PAT = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('asana_pat');
+  const asanaPat = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('asana_pat');
+  const customFieldId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('asana_custom_field_id');
+  const githubToken = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('github_token');
+  
+  // Debug logging
+  console.log('Input values:');
+  console.log('- asana_project_id:', projectId ? `${projectId.length} chars` : 'missing');
+  console.log('- asana_pat:', asanaPat ? `${asanaPat.length} chars` : 'missing');
+  console.log('- asana_custom_field_id:', customFieldId ? `${customFieldId.length} chars` : 'missing');
+  console.log('- github_token:', githubToken ? `${githubToken.length} chars` : 'missing');
+  
+  // Set environment variables
+  process.env.ASANA_PAT = asanaPat;
   process.env.ASANA_PROJECT_ID = projectId;
-  process.env.ASANA_CUSTOM_FIELD_ID = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('asana_custom_field_id');
-  process.env.GITHUB_TOKEN = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('github_token');
+  process.env.ASANA_CUSTOM_FIELD_ID = customFieldId;
+  process.env.GITHUB_TOKEN = githubToken;
   
   const issueSearchString = payload.issue?.html_url;
 
