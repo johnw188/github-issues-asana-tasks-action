@@ -58599,6 +58599,9 @@ let client = dist/* ApiClient.instance */.Sl.instance;
 let token = client.authentications["token"];
 token.accessToken = process.env.ASANA_PAT;
 
+// Debug logging for token in custom field helper
+console.log("Custom field helper - ASANA_PAT present:", !!process.env.ASANA_PAT);
+
 let customFieldsApiInstance = new dist/* CustomFieldsApi */.fK();
 
 /**
@@ -58675,6 +58678,13 @@ function getColorForRepository(repository) {
 let asana_task_create_client = dist/* ApiClient.instance */.Sl.instance;
 let asana_task_create_token = asana_task_create_client.authentications["token"];
 asana_task_create_token.accessToken = process.env.ASANA_PAT;
+
+// Debug logging for token
+console.log("ASANA_PAT present:", !!process.env.ASANA_PAT);
+console.log("ASANA_PAT length:", process.env.ASANA_PAT ? process.env.ASANA_PAT.length : 0);
+if (process.env.ASANA_PAT) {
+  console.log("ASANA_PAT starts with:", process.env.ASANA_PAT.substring(0, 4) + "...");
+}
 
 let tasksApiInstance = new dist/* TasksApi */.Uw();
 let asana_task_create_customFieldsApiInstance = new dist/* CustomFieldsApi */.fK();
