@@ -58713,9 +58713,13 @@ async function getCustomFieldForProject(customFieldGid, repository) {
       }
     };
     
+    const createOpts = {
+      body: newOptionData
+    };
+    
     const newOption = await customFieldsApiInstance.createEnumOptionForCustomField(
       customFieldGid,
-      newOptionData
+      createOpts
     );
     
     console.log(`Created new custom field option for repository: ${repository}`);
@@ -58733,11 +58737,12 @@ async function getCustomFieldForProject(customFieldGid, repository) {
  * @returns {string} A color name for the Asana enum option
  */
 function getColorForRepository(repository) {
-  // Asana enum colors
+  // Valid Asana enum colors
   const colors = [
-    "dark-red", "dark-orange", "dark-green", "dark-blue", 
-    "dark-purple", "dark-pink", "light-red", "light-orange", 
-    "light-green", "light-blue", "light-purple", "light-pink"
+    'red', 'orange', 'yellow-orange', 'yellow', 
+    'yellow-green', 'green', 'blue-green', 'aqua', 
+    'blue', 'indigo', 'purple', 'magenta', 
+    'hot-pink', 'pink', 'cool-gray'
   ];
   
   // Simple hash function to consistently assign colors
