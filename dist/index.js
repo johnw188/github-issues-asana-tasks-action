@@ -74871,8 +74871,20 @@ var github = __nccwpck_require__(5438);
  * @returns {Promise<object>}
  */
 async function issueToTask(payload) {
+  console.log("issueToTask - full payload:", JSON.stringify(payload, null, 2));
+  
   const { title, number, body, html_url, user, created_at, updated_at } = payload.issue;
   const { owner, repo } = payload.repository;
+
+  console.log("issueToTask - payload structure:", {
+    hasRepository: !!payload.repository,
+    hasOwner: !!owner,
+    hasRepo: !!repo,
+    ownerType: typeof owner,
+    repoType: typeof repo,
+    repositoryName: payload.repository?.name,
+    ownerLogin: owner?.login
+  });
 
   const name = `${title} #${number}`;
   
