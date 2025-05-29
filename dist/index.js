@@ -58412,7 +58412,9 @@ __nccwpck_require__.a(__webpack_module__, async (__webpack_handle_async_dependen
 /* harmony import */ var _lib_asana_task_add_story_js__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(9354);
 /* harmony import */ var _lib_asana_task_update_description_js__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(9448);
 /* harmony import */ var _lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__ = __nccwpck_require__(8688);
+/* harmony import */ var _lib_asana_client_js__WEBPACK_IMPORTED_MODULE_8__ = __nccwpck_require__(2190);
 // @ts-check
+
 
 
 
@@ -58451,6 +58453,9 @@ try {
   process.env.ASANA_PROJECT_ID = projectId;
   process.env.ASANA_CUSTOM_FIELD_ID = customFieldId;
   process.env.GITHUB_TOKEN = githubToken;
+  
+  // Initialize Asana client after environment variables are set
+  (0,_lib_asana_client_js__WEBPACK_IMPORTED_MODULE_8__/* .initializeAsanaClient */ .V0)();
   
   const issueSearchString = payload.issue?.html_url;
 
@@ -58506,11 +58511,90 @@ __webpack_async_result__();
 
 /***/ }),
 
+/***/ 2190:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "$W": () => (/* binding */ getTasksApi),
+/* harmony export */   "V0": () => (/* binding */ initializeAsanaClient),
+/* harmony export */   "aW": () => (/* binding */ getCustomFieldsApi)
+/* harmony export */ });
+/* unused harmony export getStoriesApi */
+/* harmony import */ var asana__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(576);
+// @ts-check
+
+
+
+let initialized = false;
+let tasksApiInstance;
+let customFieldsApiInstance;
+let storiesApiInstance;
+
+/**
+ * Initialize the Asana client with the PAT from environment
+ * Must be called after environment variables are set
+ */
+function initializeAsanaClient() {
+  if (initialized) {
+    return;
+  }
+  
+  const client = asana__WEBPACK_IMPORTED_MODULE_0__/* .ApiClient.instance */ .Sl.instance;
+  const token = client.authentications["token"];
+  token.accessToken = process.env.ASANA_PAT;
+  
+  // Debug logging
+  console.log("Initializing Asana client");
+  console.log("ASANA_PAT present:", !!process.env.ASANA_PAT);
+  console.log("ASANA_PAT length:", process.env.ASANA_PAT ? process.env.ASANA_PAT.length : 0);
+  
+  tasksApiInstance = new asana__WEBPACK_IMPORTED_MODULE_0__/* .TasksApi */ .Uw();
+  customFieldsApiInstance = new asana__WEBPACK_IMPORTED_MODULE_0__/* .CustomFieldsApi */ .fK();
+  storiesApiInstance = new asana__WEBPACK_IMPORTED_MODULE_0__/* .StoriesApi */ .Or();
+  
+  initialized = true;
+}
+
+/**
+ * Get the Tasks API instance
+ * @returns {TasksApi}
+ */
+function getTasksApi() {
+  if (!initialized) {
+    throw new Error("Asana client not initialized. Call initializeAsanaClient() first.");
+  }
+  return tasksApiInstance;
+}
+
+/**
+ * Get the Custom Fields API instance
+ * @returns {CustomFieldsApi}
+ */
+function getCustomFieldsApi() {
+  if (!initialized) {
+    throw new Error("Asana client not initialized. Call initializeAsanaClient() first.");
+  }
+  return customFieldsApiInstance;
+}
+
+/**
+ * Get the Stories API instance
+ * @returns {StoriesApi}
+ */
+function getStoriesApi() {
+  if (!initialized) {
+    throw new Error("Asana client not initialized. Call initializeAsanaClient() first.");
+  }
+  return storiesApiInstance;
+}
+
+/***/ }),
+
 /***/ 9354:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
 
 /* unused harmony export updateTask */
-/* harmony import */ var asana__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(576);
+/* harmony import */ var _asana_client_js__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2190);
 // asana-update-task.js
 
 /**
@@ -58522,13 +58606,8 @@ __webpack_async_result__();
 // import { renderMarkdown } from "./util/markdown-to-asana-html.js";
 
 
-let client = asana__WEBPACK_IMPORTED_MODULE_0__/* .ApiClient.instance */ .Sl.instance;
-let token = client.authentications["token"];
-token.accessToken = process.env.ASANA_PAT;
-
-let storiesApiInstance = new asana__WEBPACK_IMPORTED_MODULE_0__/* .StoriesApi */ .Or();
-
 async function updateTask(comment, task_gid) {
+  const storiesApiInstance = getStoriesApi();
   const story = commentToStory(comment);
 
   try {
@@ -58551,16 +58630,10 @@ async function updateTask(comment, task_gid) {
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
 /* harmony export */   "T": () => (/* binding */ markTaskComplete)
 /* harmony export */ });
-/* harmony import */ var asana__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(576);
+/* harmony import */ var _asana_client_js__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2190);
 // @ts-check
 
 
-
-let client = asana__WEBPACK_IMPORTED_MODULE_0__/* .ApiClient.instance */ .Sl.instance;
-let token = client.authentications["token"];
-token.accessToken = process.env.ASANA_PAT;
-
-let tasksApiInstance = new asana__WEBPACK_IMPORTED_MODULE_0__/* .TasksApi */ .Uw();
 
 /**
  * Toggle task completion
@@ -58570,6 +58643,8 @@ let tasksApiInstance = new asana__WEBPACK_IMPORTED_MODULE_0__/* .TasksApi */ .Uw
  * @returns
  */
 async function markTaskComplete(status, task_gid) {
+  const tasksApiInstance = (0,_asana_client_js__WEBPACK_IMPORTED_MODULE_0__/* .getTasksApi */ .$W)();
+  
   try {
     const opts = { opt_fields: "permalink_url" };
     const result = await tasksApiInstance.updateTask(
@@ -58600,21 +58675,12 @@ __nccwpck_require__.d(__webpack_exports__, {
   "v": () => (/* binding */ createTask)
 });
 
-// EXTERNAL MODULE: ./node_modules/asana/dist/index.js
-var dist = __nccwpck_require__(576);
+// EXTERNAL MODULE: ./lib/asana-client.js
+var asana_client = __nccwpck_require__(2190);
 ;// CONCATENATED MODULE: ./lib/util/custom-field-helper.js
 // @ts-check
 
 
-
-let client = dist/* ApiClient.instance */.Sl.instance;
-let token = client.authentications["token"];
-token.accessToken = process.env.ASANA_PAT;
-
-// Debug logging for token in custom field helper
-console.log("Custom field helper - ASANA_PAT present:", !!process.env.ASANA_PAT);
-
-let customFieldsApiInstance = new dist/* CustomFieldsApi */.fK();
 
 /**
  * Gets or creates a custom field option for the given repository
@@ -58624,6 +58690,8 @@ let customFieldsApiInstance = new dist/* CustomFieldsApi */.fK();
  */
 async function getCustomFieldForProject(customFieldGid, repository) {
   try {
+    const customFieldsApiInstance = (0,asana_client/* getCustomFieldsApi */.aW)();
+    
     // Get the custom field with its options
     const opts = { opt_fields: "enum_options,enum_options.name" };
     const customField = await customFieldsApiInstance.getCustomField(customFieldGid, opts);
@@ -58687,20 +58755,6 @@ function getColorForRepository(repository) {
 
 
 
-let asana_task_create_client = dist/* ApiClient.instance */.Sl.instance;
-let asana_task_create_token = asana_task_create_client.authentications["token"];
-asana_task_create_token.accessToken = process.env.ASANA_PAT;
-
-// Debug logging for token
-console.log("ASANA_PAT present:", !!process.env.ASANA_PAT);
-console.log("ASANA_PAT length:", process.env.ASANA_PAT ? process.env.ASANA_PAT.length : 0);
-if (process.env.ASANA_PAT) {
-  console.log("ASANA_PAT starts with:", process.env.ASANA_PAT.substring(0, 4) + "...");
-}
-
-let tasksApiInstance = new dist/* TasksApi */.Uw();
-let asana_task_create_customFieldsApiInstance = new dist/* CustomFieldsApi */.fK();
-
 /**
  *
  * @param {{name: string, html_notes: string}} content The contents of the task
@@ -58731,6 +58785,7 @@ async function createTask(content, projectId, repository) {
   const opts = { opt_fields: "permalink_url" };
 
   try {
+    const tasksApiInstance = (0,asana_client/* getTasksApi */.$W)();
     const result = await tasksApiInstance.createTask(task_data, opts);
 
     console.log({ result });
@@ -58750,7 +58805,7 @@ async function createTask(content, projectId, repository) {
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
 /* harmony export */   "l": () => (/* binding */ findTaskContaining)
 /* harmony export */ });
-/* harmony import */ var asana__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(576);
+/* harmony import */ var _asana_client_js__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2190);
 // @ts-check
 
 /**
@@ -58760,18 +58815,14 @@ async function createTask(content, projectId, repository) {
 
 
 
-let client = asana__WEBPACK_IMPORTED_MODULE_0__/* .ApiClient.instance */ .Sl.instance;
-let token = client.authentications["token"];
-token.accessToken = process.env.ASANA_PAT;
-
-let tasksApiInstance = new asana__WEBPACK_IMPORTED_MODULE_0__/* .TasksApi */ .Uw();
-
 /**
  * Search Project tasks for a note containing a given string
  * @param {string} needle string to search for in Task notes
  * @param {string} projectId numeric string gid of the project to search in
  */
 async function findTaskContaining(needle, projectId) {
+  const tasksApiInstance = (0,_asana_client_js__WEBPACK_IMPORTED_MODULE_0__/* .getTasksApi */ .$W)();
+  
   let taskRequests = 1;
   let tasksSearched = 0;
   let foundTask = false;
@@ -58839,16 +58890,10 @@ async function findTaskContaining(needle, projectId) {
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
 /* harmony export */   "$": () => (/* binding */ updateTaskDescription)
 /* harmony export */ });
-/* harmony import */ var asana__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(576);
+/* harmony import */ var _asana_client_js__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2190);
 // @ts-check
 
 
-
-let client = asana__WEBPACK_IMPORTED_MODULE_0__/* .ApiClient.instance */ .Sl.instance;
-let token = client.authentications["token"];
-token.accessToken = process.env.ASANA_PAT;
-
-let tasksApiInstance = new asana__WEBPACK_IMPORTED_MODULE_0__/* .TasksApi */ .Uw();
 
 /**
  * Updates an existing task's description with new content
@@ -58856,6 +58901,8 @@ let tasksApiInstance = new asana__WEBPACK_IMPORTED_MODULE_0__/* .TasksApi */ .Uw
  * @param {{name: string, html_notes: string}} content The new content for the task
  */
 async function updateTaskDescription(task_gid, content) {
+  const tasksApiInstance = (0,_asana_client_js__WEBPACK_IMPORTED_MODULE_0__/* .getTasksApi */ .$W)();
+  
   const task_data = { data: content };
   const opts = { opt_fields: "permalink_url" };
 

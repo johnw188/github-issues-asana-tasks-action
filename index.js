@@ -10,6 +10,7 @@ import { updateTask } from "./lib/asana-task-add-story.js";
 import { updateTaskDescription } from "./lib/asana-task-update-description.js";
 
 import { issueToTask } from "./lib/util/issue-to-task.js";
+import { initializeAsanaClient } from "./lib/asana-client.js";
 
 /**
  * Building from the docs here:
@@ -37,6 +38,9 @@ try {
   process.env.ASANA_PROJECT_ID = projectId;
   process.env.ASANA_CUSTOM_FIELD_ID = customFieldId;
   process.env.GITHUB_TOKEN = githubToken;
+  
+  // Initialize Asana client after environment variables are set
+  initializeAsanaClient();
   
   const issueSearchString = payload.issue?.html_url;
 
