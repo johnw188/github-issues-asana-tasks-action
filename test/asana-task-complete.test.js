@@ -8,6 +8,17 @@ import { ApiClient, TasksApi } from "asana";
 import { issueToTask } from "../lib/util/issue-to-task.js";
 import { createTask } from "../lib/asana-task-create.js";
 
+// Mock @actions/github  
+vi.mock("@actions/github", () => ({
+  getOctokit: () => ({
+    rest: {
+      issues: {
+        listComments: () => Promise.resolve({ data: [] })
+      }
+    }
+  })
+}));
+
 /**
  * Mocking a module with a factory
  *
@@ -35,7 +46,11 @@ vi.mock("asana", () => {
     // createTask: () => ({ data: { permalink_url: "https://url" } }),  // untestable
     createTask: mocks.createTask, // testable
   }));
-  return { ApiClient: ApiClientMock, TasksApi: TasksApiMock };
+  const CustomFieldsApiMock = vi.fn(() => ({
+    getCustomField: vi.fn(),
+    createEnumOptionForCustomField: vi.fn()
+  }));
+  return { ApiClient: ApiClientMock, TasksApi: TasksApiMock, CustomFieldsApi: CustomFieldsApiMock };
 });
 
 afterEach(() => {
@@ -53,17 +68,26 @@ test("get mocks working", async () => {
 });
 
 test("Call create task", async () => {
-  const dummyTask = issueToTask({
+  const dummyTask = await issueToTask({
+    action: "opened",
     issue: {
       title: "Test Task",
       number: 3456,
       body: "Task content",
       html_url: "https://github.com/joemaller/actions-test-throwaway",
+      user: { login: "testuser", html_url: "https://github.com/testuser" },
+      created_at: "2024-01-01T00:00:00Z",
+      updated_at: "2024-01-01T00:00:00Z"
     },
+    repository: {
+      name: "test-repo",
+      owner: { login: "testowner" }
+    }
   });
 
   const projectId = "1206848227995333";
-  const actual = await createTask(dummyTask, projectId);
+  const repository = "test-repo";
+  const actual = await createTask(dummyTask, projectId, repository);
 
   console.log(mocks.createTask.mock.calls);
   expect(actual).toBe("https://url");

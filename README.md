@@ -2,7 +2,15 @@
 
 #### Version 0.0.24
 
-This integration creates Asana Tasks from GitHub issues. Once linked, Asana issues will be updated when Issues are updated or commented upon. The linked Asana Task will be completed when the GitHub issue is closed.
+This integration creates Asana Tasks from GitHub issues in a single designated Asana project. Once linked, Asana tasks will be updated when Issues are edited or commented upon. The linked Asana Task will be completed when the GitHub issue is closed.
+
+## Key Features
+
+- Creates tasks in a single Asana project for all GitHub issues
+- Includes the entire issue conversation (description + comments) in the task description
+- Sets a custom field with the repository name (automatically creates new options as needed)
+- Updates task description when issues are edited or new comments are added
+- Marks tasks complete/incomplete when issues are closed/reopened
 
 ## Issues as Tasks
 
@@ -28,7 +36,7 @@ name: GitHub Issues to Asana Tasks
 
 on:
   issues:
-    types: [opened, closed, reopened]
+    types: [opened, edited, closed, reopened]
   issue_comment:
     types: [created]
 
@@ -39,22 +47,28 @@ jobs:
     steps:
       - name: GitHub Issues To Asana Tasks
         uses: ideasonpurpose/github-issues-asana-tasks-action@v0.0.24
-        env:
-          ASANA_PAT: ${{ secrets.ASANA_PAT }}
+        with:
+          asana_pat: ${{ secrets.ASANA_PAT }}
+          asana_project_id: '1234567890123456'  # Your Asana project ID
+          asana_custom_field_id: '1234567890123456'  # Optional: Custom field for repository name
 ```
 
 ## How it works
 
-After adding the GitHub Action to a repository, two things are required for the action to do anything. The repository or organization must have an [Asana Personal Access Token](https://developers.asana.com/docs/personal-access-token) stored as a **GitHub Secret** named **`ASANA_PAT`**, and the issue must include an [Asana Project Link](https://help.asana.com/hc/en-us/articles/14069807653147-Understanding-projects) in its Issue description.
+After adding the GitHub Action to a repository, you need to:
+
+1. Store an [Asana Personal Access Token](https://developers.asana.com/docs/personal-access-token) as a **GitHub Secret** named **`ASANA_PAT`**
+2. Configure the action with your Asana project ID
+3. Optionally, create a single-select custom field in your Asana project for repository names and provide its ID
 
 - **On Issue Creation**<br>
-  For newly created Issues, the Action will attempt to create a new Task in Asana, in the project linked in the description. New Tasks will appear at the top of the first group (column/list) but can be moved anywhere in the project. The GitHub Issue's description will be used to populate the task note, along with a link back to the Issue.
+  Creates a new Task in the configured Asana project. The task description includes the issue details, author information, and a link back to the GitHub issue.
 
-- **On Issue Updates (comments)**<br>
-  For existing issues containing an Asana Project link, the Action will search the Project for a Task whose note contains the GitHub Issue permalink. If found, that Task will be updated with the new Issue comment.
+- **On Issue Edit or Comment**<br>
+  Updates the existing Asana task with the full conversation history, including all comments. This ensures the Asana task always reflects the complete GitHub discussion.
 
 - **On Issue Closed/Re-opened**<br>
-  For existing issues containing an Asana Project link, the Action will search the Project for a Task whose note contains the GitHub Issue permalink. If found, that Task's `completed` status will be updated. 
+  Updates the Asana task's `completed` status to match the GitHub issue state. 
 
 ### About Personal Access Tokens
 

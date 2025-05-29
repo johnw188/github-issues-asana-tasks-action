@@ -2,6 +2,21 @@
 name: 'GitHub Issues To Asana Tasks'
 description: 'Mirror status and comments from GitHub Issues to Asana Tasks.'
 
+inputs:
+  asana_pat:
+    description: 'Asana Personal Access Token'
+    required: true
+  asana_project_id:
+    description: 'Asana Project ID where tasks will be created'
+    required: true
+  asana_custom_field_id:
+    description: 'Asana Custom Field ID for repository name (optional)'
+    required: false
+  github_token:
+    description: 'GitHub token for fetching issue comments'
+    required: false
+    default: ${{ github.token }}
+
 runs:
   using: 'node20'
   main: 'dist/index.js'
