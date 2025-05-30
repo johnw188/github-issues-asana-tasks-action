@@ -74852,7 +74852,11 @@ function renderMarkdown(rawMd) {
     .replace(/<input\s+type="checkbox"\s+disabled=""\s*\/>/g, "[ ]") // Replace unchecked checkboxes
     .replace(/href="((?!https?:\/\/)[^"]+)"/g, 'href="https://$1"') // Add https:// to links without protocol
     // Convert <pre><code> to just <pre> (Asana doesn't support nested code in pre)
-    .replace(/<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/g, '<pre>$1</pre>')
+    .replace(/<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/g, (match, code) => {
+      // Remove trailing newline if present
+      const trimmedCode = code.replace(/\n$/, '');
+      return `<pre>${trimmedCode}</pre>`;
+    })
     .trim();
 
   return `<body>${cleaned}</body>`;
@@ -74888,9 +74892,9 @@ async function issueToTask(payload) {
   
   // Build the conversation text
   let conversationText = `**Created by:** [@${user.login}](${user.html_url}) • ${new Date(created_at).toLocaleDateString()}\n`;
-  conversationText += `**GitHub:** ${html_url}\n\n`;
-  conversationText += `---\n\n`;
-  conversationText += `${body || '_No description provided_'}\n\n`;
+  conversationText += `**GitHub:** ${html_url}\n`;
+  conversationText += `---\n`;
+  conversationText += `${body || '_No description provided_'}\n`;
 
   // Get all comments if this is not an issue creation
   if (payload.action !== "opened") {
@@ -74903,15 +74907,15 @@ async function issueToTask(payload) {
       });
 
       if (comments.length > 0) {
-        conversationText += `---\n\n## Comments\n\n`;
+        conversationText += `\n---\n## Comments\n`;
         
         for (const comment of comments) {
           const username = comment.user?.login || 'ghost';
           const userUrl = comment.user?.html_url || `https://github.com/${username}`;
           const commentDate = new Date(comment.created_at).toLocaleDateString();
           const commentTime = new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          conversationText += `**[@${username}](${userUrl})** • ${commentDate} at ${commentTime}\n\n`;
-          conversationText += `${comment.body}\n\n`;
+          conversationText += `\n**[@${username}](${userUrl})** • ${commentDate} at ${commentTime}\n`;
+          conversationText += `${comment.body}\n`;
         }
       }
     } catch (error) {
