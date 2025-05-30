@@ -10,6 +10,7 @@ This integration creates Asana Tasks from GitHub issues in a single designated A
 - Includes the entire issue conversation (description + comments) in the task description
 - Sets a custom field with the repository name (automatically creates new options as needed)
 - Sets a custom field with the issue creator's GitHub username
+- Stores GitHub issue URL in a custom field for efficient searching
 - Updates task description when issues are edited or new comments are added
 - Marks tasks complete/incomplete when issues are closed/reopened
 
@@ -55,6 +56,7 @@ jobs:
           asana_project_id: '1234567890123456'  # Your Asana project ID
           repository_field_id: '1234567890123456'  # Optional: Custom field for repository name
           creator_field_id: '1234567890123456'  # Optional: Custom field for issue creator
+          github_url_field_id: '1234567890123456'  # Optional: Custom field for GitHub URL (enables faster search)
 ```
 
 ### Manual Sync All Issues
@@ -85,6 +87,7 @@ jobs:
           asana_project_id: '1234567890123456'  # Your Asana project ID
           repository_field_id: '1234567890123456'  # Optional: Custom field for repository name
           creator_field_id: '1234567890123456'  # Optional: Custom field for issue creator
+          github_url_field_id: '1234567890123456'  # Optional: Custom field for GitHub URL (enables faster search)
           sync_closed_issues: ${{ github.event.inputs.sync_closed_issues }}
 ```
 
@@ -98,6 +101,7 @@ After adding the GitHub Action to a repository, you need to:
 2. Configure the action with your Asana project ID
 3. Optionally, create a single-select custom field in your Asana project for repository names and provide its ID
 4. Optionally, create a text custom field in your Asana project for issue creators and provide its ID
+5. Optionally, create a text custom field in your Asana project for GitHub URLs and provide its ID (enables much faster task lookup)
 
 - **On Issue Creation**<br>
   Creates a new Task in the configured Asana project. The task description includes the issue details, author information, and a link back to the GitHub issue.

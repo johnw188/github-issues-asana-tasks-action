@@ -15,6 +15,9 @@ inputs:
   creator_field_id:
     description: 'Asana Custom Field ID for issue creator (optional)'
     required: false
+  github_url_field_id:
+    description: 'Asana Custom Field ID for GitHub issue URL (optional, enables faster search)'
+    required: false
   github_token:
     description: 'GitHub token for fetching issue comments'
     required: false

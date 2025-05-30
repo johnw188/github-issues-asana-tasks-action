@@ -82,7 +82,8 @@ async function syncAllIssues() {
           console.log(`  Creating new task...`);
           const taskContent = await issueToTask(payload);
           const creator = issue.user.login;
-          await createTask(taskContent, projectId, repo, creator);
+          const githubUrl = issue.html_url;
+          await createTask(taskContent, projectId, repo, creator, githubUrl);
           
           // If issue is closed, mark the task as complete
           if (issue.state === 'closed') {

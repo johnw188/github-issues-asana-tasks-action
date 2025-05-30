@@ -26,6 +26,7 @@ async function main() {
   const asanaPat = core.getInput('asana_pat');
   const repositoryFieldId = core.getInput('repository_field_id');
   const creatorFieldId = core.getInput('creator_field_id');
+  const githubUrlFieldId = core.getInput('github_url_field_id');
   const githubToken = core.getInput('github_token');
   
   
@@ -34,6 +35,7 @@ async function main() {
   process.env.ASANA_PROJECT_ID = projectId;
   process.env.REPOSITORY_FIELD_ID = repositoryFieldId;
   process.env.CREATOR_FIELD_ID = creatorFieldId;
+  process.env.GITHUB_URL_FIELD_ID = githubUrlFieldId;
   process.env.GITHUB_TOKEN = githubToken;
   
   // Initialize Asana client after environment variables are set
@@ -59,7 +61,8 @@ async function main() {
       const taskContent = await issueToTask(payload);
       const repository = payload.repository.name;
       const creator = payload.issue.user.login;
-      result = await createTask(taskContent, projectId, repository, creator);
+      const githubUrl = payload.issue.html_url;
+      result = await createTask(taskContent, projectId, repository, creator, githubUrl);
     } else if (action === "edited") {
       // Update the existing task when issue is edited
       const theTask = await findTaskContaining(issueSearchString, projectId);
@@ -68,7 +71,8 @@ async function main() {
         const taskContent = await issueToTask(payload);
         const repository = payload.repository.name;
         const creator = payload.issue.user.login;
-        result = await createTask(taskContent, projectId, repository, creator);
+        const githubUrl = payload.issue.html_url;
+        result = await createTask(taskContent, projectId, repository, creator, githubUrl);
       } else {
         const taskContent = await issueToTask(payload);
         result = await updateTaskDescription(theTask.gid, taskContent);
@@ -82,7 +86,8 @@ async function main() {
         const taskContent = await issueToTask(payload);
         const repository = payload.repository.name;
         const creator = payload.issue.user.login;
-        const newTask = await createTask(taskContent, projectId, repository, creator);
+        const githubUrl = payload.issue.html_url;
+        const newTask = await createTask(taskContent, projectId, repository, creator, githubUrl);
         const completed = !!(action === "closed");
         result = await markTaskComplete(completed, newTask.data.gid);
       } else {
@@ -97,7 +102,8 @@ async function main() {
       const taskContent = await issueToTask(payload);
       const repository = payload.repository.name;
       const creator = payload.issue.user.login;
-      result = await createTask(taskContent, projectId, repository, creator);
+      const githubUrl = payload.issue.html_url;
+      result = await createTask(taskContent, projectId, repository, creator, githubUrl);
     } else {
       // Update task description to include the new comment
       const taskContent = await issueToTask(payload);

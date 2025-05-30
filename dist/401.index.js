@@ -98,7 +98,8 @@ async function syncAllIssues() {
           console.log(`  Creating new task...`);
           const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_6__/* .issueToTask */ .U)(payload);
           const creator = issue.user.login;
-          await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repo, creator);
+          const githubUrl = issue.html_url;
+          await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repo, creator, githubUrl);
           
           // If issue is closed, mark the task as complete
           if (issue.state === 'closed') {

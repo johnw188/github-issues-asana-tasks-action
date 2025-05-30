@@ -58617,11 +58617,13 @@ function getColorForRepository(repository) {
  * @param {string} projectId numeric string of the project to put this task in
  * @param {string} repository The GitHub repository name
  * @param {string} creator The GitHub username of the issue creator
+ * @param {string} githubUrl The GitHub issue URL
  */
-async function createTask(content, projectId, repository, creator) {
+async function createTask(content, projectId, repository, creator, githubUrl) {
   // Get custom field IDs from environment
   const repositoryFieldGid = process.env.REPOSITORY_FIELD_ID;
   const creatorFieldGid = process.env.CREATOR_FIELD_ID;
+  const githubUrlFieldGid = process.env.GITHUB_URL_FIELD_ID;
   
   let customFields = {};
   
@@ -58634,6 +58636,11 @@ async function createTask(content, projectId, repository, creator) {
   // Add creator field if configured
   if (creatorFieldGid && creator) {
     customFields[creatorFieldGid] = `@${creator}`;
+  }
+  
+  // Add GitHub URL field if configured
+  if (githubUrlFieldGid && githubUrl) {
+    customFields[githubUrlFieldGid] = githubUrl;
   }
   
   // Only add custom_fields if we have any
@@ -75051,6 +75058,7 @@ async function main() {
   const asanaPat = core.getInput('asana_pat');
   const repositoryFieldId = core.getInput('repository_field_id');
   const creatorFieldId = core.getInput('creator_field_id');
+  const githubUrlFieldId = core.getInput('github_url_field_id');
   const githubToken = core.getInput('github_token');
   
   
@@ -75059,6 +75067,7 @@ async function main() {
   process.env.ASANA_PROJECT_ID = projectId;
   process.env.REPOSITORY_FIELD_ID = repositoryFieldId;
   process.env.CREATOR_FIELD_ID = creatorFieldId;
+  process.env.GITHUB_URL_FIELD_ID = githubUrlFieldId;
   process.env.GITHUB_TOKEN = githubToken;
   
   // Initialize Asana client after environment variables are set
@@ -75084,7 +75093,8 @@ async function main() {
       const taskContent = await (0,issue_to_task/* issueToTask */.U)(payload);
       const repository = payload.repository.name;
       const creator = payload.issue.user.login;
-      result = await (0,asana_task_create/* createTask */.v)(taskContent, projectId, repository, creator);
+      const githubUrl = payload.issue.html_url;
+      result = await (0,asana_task_create/* createTask */.v)(taskContent, projectId, repository, creator, githubUrl);
     } else if (action === "edited") {
       // Update the existing task when issue is edited
       const theTask = await (0,asana_task_find/* findTaskContaining */.l)(issueSearchString, projectId);
@@ -75093,7 +75103,8 @@ async function main() {
         const taskContent = await (0,issue_to_task/* issueToTask */.U)(payload);
         const repository = payload.repository.name;
         const creator = payload.issue.user.login;
-        result = await (0,asana_task_create/* createTask */.v)(taskContent, projectId, repository, creator);
+        const githubUrl = payload.issue.html_url;
+        result = await (0,asana_task_create/* createTask */.v)(taskContent, projectId, repository, creator, githubUrl);
       } else {
         const taskContent = await (0,issue_to_task/* issueToTask */.U)(payload);
         result = await (0,asana_task_update_description/* updateTaskDescription */.$)(theTask.gid, taskContent);
@@ -75107,7 +75118,8 @@ async function main() {
         const taskContent = await (0,issue_to_task/* issueToTask */.U)(payload);
         const repository = payload.repository.name;
         const creator = payload.issue.user.login;
-        const newTask = await (0,asana_task_create/* createTask */.v)(taskContent, projectId, repository, creator);
+        const githubUrl = payload.issue.html_url;
+        const newTask = await (0,asana_task_create/* createTask */.v)(taskContent, projectId, repository, creator, githubUrl);
         const completed = !!(action === "closed");
         result = await (0,asana_task_completed/* markTaskComplete */.T)(completed, newTask.data.gid);
       } else {
@@ -75122,7 +75134,8 @@ async function main() {
       const taskContent = await (0,issue_to_task/* issueToTask */.U)(payload);
       const repository = payload.repository.name;
       const creator = payload.issue.user.login;
-      result = await (0,asana_task_create/* createTask */.v)(taskContent, projectId, repository, creator);
+      const githubUrl = payload.issue.html_url;
+      result = await (0,asana_task_create/* createTask */.v)(taskContent, projectId, repository, creator, githubUrl);
     } else {
       // Update task description to include the new comment
       const taskContent = await (0,issue_to_task/* issueToTask */.U)(payload);
