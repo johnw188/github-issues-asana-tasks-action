@@ -19,6 +19,10 @@ inputs:
     description: 'GitHub token for fetching issue comments'
     required: false
     default: ${{ github.token }}
+  sync_closed_issues:
+    description: 'When running in sync mode, include closed issues (default: false)'
+    required: false
+    default: 'false'
 
 runs:
   using: 'node20'

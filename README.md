@@ -28,9 +28,11 @@ Tasks are a better mirror of Issues than Pull Requests. Issues are created becau
 
 Because development happens on GitHub, having Issues attached to the code greatly reduces developer friction and prevents flow-breaking context shifts. Issues are attached to the code, and can be updated and resolved as part of the normal Git workflow. Issue creation is significantly more robust and faster using GitHub on Mobile, so QA can happen anywhere on a single device -- activating Mobile-friendly in-between spaces like subway commutes and other downtime.
 
-## Example Action
+## Example Actions
 
-To use this action, add a workflow like this to your repo:
+### Automatic Sync on Issue Events
+
+To automatically sync issues as they're created/updated, add this workflow to your repo:
 
 ```yaml
 name: GitHub Issues to Asana Tasks
@@ -54,6 +56,39 @@ jobs:
           repository_field_id: '1234567890123456'  # Optional: Custom field for repository name
           creator_field_id: '1234567890123456'  # Optional: Custom field for issue creator
 ```
+
+### Manual Sync All Issues
+
+To add a button that syncs all issues on demand, create this workflow:
+
+```yaml
+name: Sync All GitHub Issues to Asana
+
+on:
+  workflow_dispatch:
+    inputs:
+      sync_closed_issues:
+        description: 'Sync closed issues too?'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  sync-all-issues:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Sync All Issues to Asana
+        uses: ideasonpurpose/github-issues-asana-tasks-action@v0.0.24
+        with:
+          asana_pat: ${{ secrets.ASANA_PAT }}
+          asana_project_id: '1234567890123456'  # Your Asana project ID
+          repository_field_id: '1234567890123456'  # Optional: Custom field for repository name
+          creator_field_id: '1234567890123456'  # Optional: Custom field for issue creator
+          sync_closed_issues: ${{ github.event.inputs.sync_closed_issues }}
+```
+
+This creates a "Run workflow" button in your repository's Actions tab that lets you manually sync all issues. You can optionally include closed issues by checking the checkbox when running the workflow.
 
 ## How it works
 

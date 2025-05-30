@@ -16,9 +16,10 @@ import { initializeAsanaClient } from "./lib/asana-client.js";
  * Building from the docs here:
  * @link https://docs.github.com/en/actions/creating-actions/creating-a-javascript-action
  */
-try {
-  const { eventName, payload } = github.context;
-  const { action } = payload;
+async function main() {
+  try {
+    const { eventName, payload } = github.context;
+    const { action } = payload;
 
   // Get inputs from action
   const projectId = core.getInput('asana_project_id');
@@ -105,9 +106,23 @@ try {
   }
 
 
-  if (result.errors) {
-    core.setFailed(JSON.stringify(result, null, 2));
+    if (result && result.errors) {
+      core.setFailed(JSON.stringify(result, null, 2));
+    }
+  } catch (error) {
+    core.setFailed(error.message);
   }
-} catch (error) {
-  core.setFailed(error.message);
+}
+
+// Check if we should run sync mode or regular mode
+if (github.context.eventName === 'workflow_dispatch') {
+  // Import and run sync script
+  import('./sync-all.js').then(() => {
+    console.log('Sync mode completed');
+  }).catch(error => {
+    core.setFailed(`Sync mode failed: ${error.message}`);
+  });
+} else {
+  // Run regular event handler
+  main();
 }

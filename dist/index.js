@@ -58400,138 +58400,6 @@ module.exports = parseParams
 
 /***/ }),
 
-/***/ 1378:
-/***/ ((__webpack_module__, __unused_webpack___webpack_exports__, __nccwpck_require__) => {
-
-__nccwpck_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
-/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(5438);
-/* harmony import */ var _lib_asana_task_find_js__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(7902);
-/* harmony import */ var _lib_asana_task_completed_js__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(2798);
-/* harmony import */ var _lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(4255);
-/* harmony import */ var _lib_asana_task_add_story_js__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(9354);
-/* harmony import */ var _lib_asana_task_update_description_js__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(9448);
-/* harmony import */ var _lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__ = __nccwpck_require__(8688);
-/* harmony import */ var _lib_asana_client_js__WEBPACK_IMPORTED_MODULE_8__ = __nccwpck_require__(2190);
-// @ts-check
-
-
-
-
-
-
-
-
-
-
-
-
-
-/**
- * Building from the docs here:
- * @link https://docs.github.com/en/actions/creating-actions/creating-a-javascript-action
- */
-try {
-  const { eventName, payload } = _actions_github__WEBPACK_IMPORTED_MODULE_1__.context;
-  const { action } = payload;
-
-  // Get inputs from action
-  const projectId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('asana_project_id');
-  const asanaPat = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('asana_pat');
-  const repositoryFieldId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('repository_field_id');
-  const creatorFieldId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('creator_field_id');
-  const githubToken = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('github_token');
-  
-  
-  // Set environment variables
-  process.env.ASANA_PAT = asanaPat;
-  process.env.ASANA_PROJECT_ID = projectId;
-  process.env.REPOSITORY_FIELD_ID = repositoryFieldId;
-  process.env.CREATOR_FIELD_ID = creatorFieldId;
-  process.env.GITHUB_TOKEN = githubToken;
-  
-  // Initialize Asana client after environment variables are set
-  (0,_lib_asana_client_js__WEBPACK_IMPORTED_MODULE_8__/* .initializeAsanaClient */ .V0)();
-  
-  const issueSearchString = payload.issue?.html_url;
-
-
-  if (!projectId) {
-    throw new Error("ASANA_PROJECT_ID environment variable is not set");
-  }
-  
-  if (!issueSearchString) {
-    throw new Error("Unable to find GitHub issue URL");
-  }
-  // NOTE: Actions must be validated to prevent running in the wrong context if the action is
-  //       specified to run on all types or un-handled types.
-
-  let result;
-
-  if (eventName === "issues") {
-    if (action === "opened") {
-      const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
-      const repository = payload.repository.name;
-      const creator = payload.issue.user.login;
-      result = await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repository, creator);
-    } else if (action === "edited") {
-      // Update the existing task when issue is edited
-      const theTask = await (0,_lib_asana_task_find_js__WEBPACK_IMPORTED_MODULE_2__/* .findTaskContaining */ .l)(issueSearchString, projectId);
-      if (!theTask) {
-        // Task was deleted, recreate it
-        const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
-        const repository = payload.repository.name;
-        const creator = payload.issue.user.login;
-        result = await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repository, creator);
-      } else {
-        const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
-        result = await (0,_lib_asana_task_update_description_js__WEBPACK_IMPORTED_MODULE_6__/* .updateTaskDescription */ .$)(theTask.gid, taskContent);
-      }
-    } else if (action === "closed" || action === "reopened") {
-      // mark action completed = true, or incomplete = false)
-
-      const theTask = await (0,_lib_asana_task_find_js__WEBPACK_IMPORTED_MODULE_2__/* .findTaskContaining */ .l)(issueSearchString, projectId);
-      if (!theTask) {
-        // Task was deleted, recreate it and then mark its status
-        const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
-        const repository = payload.repository.name;
-        const creator = payload.issue.user.login;
-        const newTask = await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repository, creator);
-        const completed = !!(action === "closed");
-        result = await (0,_lib_asana_task_completed_js__WEBPACK_IMPORTED_MODULE_3__/* .markTaskComplete */ .T)(completed, newTask.data.gid);
-      } else {
-        const completed = !!(action === "closed");
-        result = await (0,_lib_asana_task_completed_js__WEBPACK_IMPORTED_MODULE_3__/* .markTaskComplete */ .T)(completed, theTask.gid);
-      }
-    }
-  } else if (eventName === "issue_comment" && action === "created") {
-    const theTask = await (0,_lib_asana_task_find_js__WEBPACK_IMPORTED_MODULE_2__/* .findTaskContaining */ .l)(issueSearchString, projectId);
-    if (!theTask) {
-      // Task was deleted, recreate it with full conversation
-      const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
-      const repository = payload.repository.name;
-      const creator = payload.issue.user.login;
-      result = await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repository, creator);
-    } else {
-      // Update task description to include the new comment
-      const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
-      result = await (0,_lib_asana_task_update_description_js__WEBPACK_IMPORTED_MODULE_6__/* .updateTaskDescription */ .$)(theTask.gid, taskContent);
-    }
-  }
-
-
-  if (result.errors) {
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(JSON.stringify(result, null, 2));
-  }
-} catch (error) {
-  _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(error.message);
-}
-
-__webpack_async_result__();
-} catch(e) { __webpack_async_result__(e); } }, 1);
-
-/***/ }),
-
 /***/ 2190:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
 
@@ -58604,40 +58472,6 @@ function getStoriesApi() {
   }
   return storiesApiInstance;
 }
-
-/***/ }),
-
-/***/ 9354:
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
-
-/* unused harmony export updateTask */
-/* harmony import */ var _asana_client_js__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2190);
-// asana-update-task.js
-
-/**
- * This adds comments to an existing task.
- */
-
-
-
-// import { renderMarkdown } from "./util/markdown-to-asana-html.js";
-
-
-async function updateTask(comment, task_gid) {
-  const storiesApiInstance = getStoriesApi();
-  const story = commentToStory(comment);
-
-  try {
-    const result = await storiesApiInstance.createStoryForTask(story, task_gid);
-
-    console.log({ story, task_gid, result });
-    return result;
-  } catch (error) {
-    console.error(error.response.status, error.response.body);
-    return error.response.body;
-  }
-}
-
 
 /***/ }),
 
@@ -75020,76 +74854,10 @@ module.exports = JSON.parse('{"application/1d-interleaved-parityfec":{"source":"
 /******/ 	return module.exports;
 /******/ }
 /******/ 
-/************************************************************************/
-/******/ /* webpack/runtime/async module */
-/******/ (() => {
-/******/ 	var webpackQueues = typeof Symbol === "function" ? Symbol("webpack queues") : "__webpack_queues__";
-/******/ 	var webpackExports = typeof Symbol === "function" ? Symbol("webpack exports") : "__webpack_exports__";
-/******/ 	var webpackError = typeof Symbol === "function" ? Symbol("webpack error") : "__webpack_error__";
-/******/ 	var resolveQueue = (queue) => {
-/******/ 		if(queue && !queue.d) {
-/******/ 			queue.d = 1;
-/******/ 			queue.forEach((fn) => (fn.r--));
-/******/ 			queue.forEach((fn) => (fn.r-- ? fn.r++ : fn()));
-/******/ 		}
-/******/ 	}
-/******/ 	var wrapDeps = (deps) => (deps.map((dep) => {
-/******/ 		if(dep !== null && typeof dep === "object") {
-/******/ 			if(dep[webpackQueues]) return dep;
-/******/ 			if(dep.then) {
-/******/ 				var queue = [];
-/******/ 				queue.d = 0;
-/******/ 				dep.then((r) => {
-/******/ 					obj[webpackExports] = r;
-/******/ 					resolveQueue(queue);
-/******/ 				}, (e) => {
-/******/ 					obj[webpackError] = e;
-/******/ 					resolveQueue(queue);
-/******/ 				});
-/******/ 				var obj = {};
-/******/ 				obj[webpackQueues] = (fn) => (fn(queue));
-/******/ 				return obj;
-/******/ 			}
-/******/ 		}
-/******/ 		var ret = {};
-/******/ 		ret[webpackQueues] = x => {};
-/******/ 		ret[webpackExports] = dep;
-/******/ 		return ret;
-/******/ 	}));
-/******/ 	__nccwpck_require__.a = (module, body, hasAwait) => {
-/******/ 		var queue;
-/******/ 		hasAwait && ((queue = []).d = 1);
-/******/ 		var depQueues = new Set();
-/******/ 		var exports = module.exports;
-/******/ 		var currentDeps;
-/******/ 		var outerResolve;
-/******/ 		var reject;
-/******/ 		var promise = new Promise((resolve, rej) => {
-/******/ 			reject = rej;
-/******/ 			outerResolve = resolve;
-/******/ 		});
-/******/ 		promise[webpackExports] = exports;
-/******/ 		promise[webpackQueues] = (fn) => (queue && fn(queue), depQueues.forEach(fn), promise["catch"](x => {}));
-/******/ 		module.exports = promise;
-/******/ 		body((deps) => {
-/******/ 			currentDeps = wrapDeps(deps);
-/******/ 			var fn;
-/******/ 			var getResult = () => (currentDeps.map((d) => {
-/******/ 				if(d[webpackError]) throw d[webpackError];
-/******/ 				return d[webpackExports];
-/******/ 			}))
-/******/ 			var promise = new Promise((resolve) => {
-/******/ 				fn = () => (resolve(getResult));
-/******/ 				fn.r = 0;
-/******/ 				var fnQueue = (q) => (q !== queue && !depQueues.has(q) && (depQueues.add(q), q && !q.d && (fn.r++, q.push(fn))));
-/******/ 				currentDeps.map((dep) => (dep[webpackQueues](fnQueue)));
-/******/ 			});
-/******/ 			return fn.r ? promise : getResult();
-/******/ 		}, (err) => ((err ? reject(promise[webpackError] = err) : outerResolve(exports)), resolveQueue(queue)));
-/******/ 		queue && (queue.d = 0);
-/******/ 	};
-/******/ })();
+/******/ // expose the modules object (__webpack_modules__)
+/******/ __nccwpck_require__.m = __webpack_modules__;
 /******/ 
+/************************************************************************/
 /******/ /* webpack/runtime/define property getters */
 /******/ (() => {
 /******/ 	// define getter functions for harmony exports
@@ -75099,6 +74867,28 @@ module.exports = JSON.parse('{"application/1d-interleaved-parityfec":{"source":"
 /******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 			}
 /******/ 		}
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/ensure chunk */
+/******/ (() => {
+/******/ 	__nccwpck_require__.f = {};
+/******/ 	// This file contains only the entry chunk.
+/******/ 	// The chunk loading function for additional chunks
+/******/ 	__nccwpck_require__.e = (chunkId) => {
+/******/ 		return Promise.all(Object.keys(__nccwpck_require__.f).reduce((promises, key) => {
+/******/ 			__nccwpck_require__.f[key](chunkId, promises);
+/******/ 			return promises;
+/******/ 		}, []));
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/get javascript chunk filename */
+/******/ (() => {
+/******/ 	// This function allow to reference async chunks
+/******/ 	__nccwpck_require__.u = (chunkId) => {
+/******/ 		// return url for filenames based on template
+/******/ 		return "" + chunkId + ".index.js";
 /******/ 	};
 /******/ })();
 /******/ 
@@ -75122,11 +74912,242 @@ module.exports = JSON.parse('{"application/1d-interleaved-parityfec":{"source":"
 /******/ 
 /******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = new URL('.', import.meta.url).pathname.slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
 /******/ 
+/******/ /* webpack/runtime/import chunk loading */
+/******/ (() => {
+/******/ 	// no baseURI
+/******/ 	
+/******/ 	// object to store loaded and loading chunks
+/******/ 	// undefined = chunk not loaded, null = chunk preloaded/prefetched
+/******/ 	// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
+/******/ 	var installedChunks = {
+/******/ 		179: 0
+/******/ 	};
+/******/ 	
+/******/ 	var installChunk = (data) => {
+/******/ 		var {ids, modules, runtime} = data;
+/******/ 		// add "modules" to the modules object,
+/******/ 		// then flag all "ids" as loaded and fire callback
+/******/ 		var moduleId, chunkId, i = 0;
+/******/ 		for(moduleId in modules) {
+/******/ 			if(__nccwpck_require__.o(modules, moduleId)) {
+/******/ 				__nccwpck_require__.m[moduleId] = modules[moduleId];
+/******/ 			}
+/******/ 		}
+/******/ 		if(runtime) runtime(__nccwpck_require__);
+/******/ 		for(;i < ids.length; i++) {
+/******/ 			chunkId = ids[i];
+/******/ 			if(__nccwpck_require__.o(installedChunks, chunkId) && installedChunks[chunkId]) {
+/******/ 				installedChunks[chunkId][0]();
+/******/ 			}
+/******/ 			installedChunks[ids[i]] = 0;
+/******/ 		}
+/******/ 	
+/******/ 	}
+/******/ 	
+/******/ 	__nccwpck_require__.f.j = (chunkId, promises) => {
+/******/ 			// import() chunk loading for javascript
+/******/ 			var installedChunkData = __nccwpck_require__.o(installedChunks, chunkId) ? installedChunks[chunkId] : undefined;
+/******/ 			if(installedChunkData !== 0) { // 0 means "already installed".
+/******/ 	
+/******/ 				// a Promise means "currently loading".
+/******/ 				if(installedChunkData) {
+/******/ 					promises.push(installedChunkData[1]);
+/******/ 				} else {
+/******/ 					if(true) { // all chunks have JS
+/******/ 						// setup Promise in chunk cache
+/******/ 						var promise = import("./" + __nccwpck_require__.u(chunkId)).then(installChunk, (e) => {
+/******/ 							if(installedChunks[chunkId] !== 0) installedChunks[chunkId] = undefined;
+/******/ 							throw e;
+/******/ 						});
+/******/ 						var promise = Promise.race([promise, new Promise((resolve) => (installedChunkData = installedChunks[chunkId] = [resolve]))])
+/******/ 						promises.push(installedChunkData[1] = promise);
+/******/ 					} else installedChunks[chunkId] = 0;
+/******/ 				}
+/******/ 			}
+/******/ 	};
+/******/ 	
+/******/ 	// no external install chunk
+/******/ 	
+/******/ 	// no on chunks loaded
+/******/ })();
+/******/ 
 /************************************************************************/
-/******/ 
-/******/ // startup
-/******/ // Load entry module and return exports
-/******/ // This entry module used 'module' so it can't be inlined
-/******/ var __webpack_exports__ = __nccwpck_require__(1378);
-/******/ __webpack_exports__ = await __webpack_exports__;
-/******/ 
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+(() => {
+
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(2186);
+// EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
+var github = __nccwpck_require__(5438);
+// EXTERNAL MODULE: ./lib/asana-task-find.js
+var asana_task_find = __nccwpck_require__(7902);
+// EXTERNAL MODULE: ./lib/asana-task-completed.js
+var asana_task_completed = __nccwpck_require__(2798);
+// EXTERNAL MODULE: ./lib/asana-task-create.js + 1 modules
+var asana_task_create = __nccwpck_require__(4255);
+// EXTERNAL MODULE: ./lib/asana-client.js
+var asana_client = __nccwpck_require__(2190);
+;// CONCATENATED MODULE: ./lib/asana-task-add-story.js
+// asana-update-task.js
+
+/**
+ * This adds comments to an existing task.
+ */
+
+
+
+// import { renderMarkdown } from "./util/markdown-to-asana-html.js";
+
+
+async function updateTask(comment, task_gid) {
+  const storiesApiInstance = getStoriesApi();
+  const story = commentToStory(comment);
+
+  try {
+    const result = await storiesApiInstance.createStoryForTask(story, task_gid);
+
+    console.log({ story, task_gid, result });
+    return result;
+  } catch (error) {
+    console.error(error.response.status, error.response.body);
+    return error.response.body;
+  }
+}
+
+// EXTERNAL MODULE: ./lib/asana-task-update-description.js
+var asana_task_update_description = __nccwpck_require__(9448);
+// EXTERNAL MODULE: ./lib/util/issue-to-task.js + 66 modules
+var issue_to_task = __nccwpck_require__(8688);
+;// CONCATENATED MODULE: ./index.js
+// @ts-check
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * Building from the docs here:
+ * @link https://docs.github.com/en/actions/creating-actions/creating-a-javascript-action
+ */
+async function main() {
+  try {
+    const { eventName, payload } = github.context;
+    const { action } = payload;
+
+  // Get inputs from action
+  const projectId = core.getInput('asana_project_id');
+  const asanaPat = core.getInput('asana_pat');
+  const repositoryFieldId = core.getInput('repository_field_id');
+  const creatorFieldId = core.getInput('creator_field_id');
+  const githubToken = core.getInput('github_token');
+  
+  
+  // Set environment variables
+  process.env.ASANA_PAT = asanaPat;
+  process.env.ASANA_PROJECT_ID = projectId;
+  process.env.REPOSITORY_FIELD_ID = repositoryFieldId;
+  process.env.CREATOR_FIELD_ID = creatorFieldId;
+  process.env.GITHUB_TOKEN = githubToken;
+  
+  // Initialize Asana client after environment variables are set
+  (0,asana_client/* initializeAsanaClient */.V0)();
+  
+  const issueSearchString = payload.issue?.html_url;
+
+
+  if (!projectId) {
+    throw new Error("ASANA_PROJECT_ID environment variable is not set");
+  }
+  
+  if (!issueSearchString) {
+    throw new Error("Unable to find GitHub issue URL");
+  }
+  // NOTE: Actions must be validated to prevent running in the wrong context if the action is
+  //       specified to run on all types or un-handled types.
+
+  let result;
+
+  if (eventName === "issues") {
+    if (action === "opened") {
+      const taskContent = await (0,issue_to_task/* issueToTask */.U)(payload);
+      const repository = payload.repository.name;
+      const creator = payload.issue.user.login;
+      result = await (0,asana_task_create/* createTask */.v)(taskContent, projectId, repository, creator);
+    } else if (action === "edited") {
+      // Update the existing task when issue is edited
+      const theTask = await (0,asana_task_find/* findTaskContaining */.l)(issueSearchString, projectId);
+      if (!theTask) {
+        // Task was deleted, recreate it
+        const taskContent = await (0,issue_to_task/* issueToTask */.U)(payload);
+        const repository = payload.repository.name;
+        const creator = payload.issue.user.login;
+        result = await (0,asana_task_create/* createTask */.v)(taskContent, projectId, repository, creator);
+      } else {
+        const taskContent = await (0,issue_to_task/* issueToTask */.U)(payload);
+        result = await (0,asana_task_update_description/* updateTaskDescription */.$)(theTask.gid, taskContent);
+      }
+    } else if (action === "closed" || action === "reopened") {
+      // mark action completed = true, or incomplete = false)
+
+      const theTask = await (0,asana_task_find/* findTaskContaining */.l)(issueSearchString, projectId);
+      if (!theTask) {
+        // Task was deleted, recreate it and then mark its status
+        const taskContent = await (0,issue_to_task/* issueToTask */.U)(payload);
+        const repository = payload.repository.name;
+        const creator = payload.issue.user.login;
+        const newTask = await (0,asana_task_create/* createTask */.v)(taskContent, projectId, repository, creator);
+        const completed = !!(action === "closed");
+        result = await (0,asana_task_completed/* markTaskComplete */.T)(completed, newTask.data.gid);
+      } else {
+        const completed = !!(action === "closed");
+        result = await (0,asana_task_completed/* markTaskComplete */.T)(completed, theTask.gid);
+      }
+    }
+  } else if (eventName === "issue_comment" && action === "created") {
+    const theTask = await (0,asana_task_find/* findTaskContaining */.l)(issueSearchString, projectId);
+    if (!theTask) {
+      // Task was deleted, recreate it with full conversation
+      const taskContent = await (0,issue_to_task/* issueToTask */.U)(payload);
+      const repository = payload.repository.name;
+      const creator = payload.issue.user.login;
+      result = await (0,asana_task_create/* createTask */.v)(taskContent, projectId, repository, creator);
+    } else {
+      // Update task description to include the new comment
+      const taskContent = await (0,issue_to_task/* issueToTask */.U)(payload);
+      result = await (0,asana_task_update_description/* updateTaskDescription */.$)(theTask.gid, taskContent);
+    }
+  }
+
+
+    if (result && result.errors) {
+      core.setFailed(JSON.stringify(result, null, 2));
+    }
+  } catch (error) {
+    core.setFailed(error.message);
+  }
+}
+
+// Check if we should run sync mode or regular mode
+if (github.context.eventName === 'workflow_dispatch') {
+  // Import and run sync script
+  __nccwpck_require__.e(/* import() */ 401).then(__nccwpck_require__.bind(__nccwpck_require__, 8401)).then(() => {
+    console.log('Sync mode completed');
+  }).catch(error => {
+    core.setFailed(`Sync mode failed: ${error.message}`);
+  });
+} else {
+  // Run regular event handler
+  main();
+}
+
+})();
+
