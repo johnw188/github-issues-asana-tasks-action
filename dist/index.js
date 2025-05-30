@@ -74862,7 +74862,12 @@ function renderMarkdown(rawMd) {
     .replace(/\n<\/blockquote>/g, '</blockquote>')
     .trim();
 
-  return `<body>${cleaned}</body>`;
+  // Final cleanup pass
+  const final = `<body>${cleaned}</body>`
+    // Remove newlines after <hr> tags
+    .replace(/<hr>\n+/g, '<hr>');
+
+  return final;
 }
 
 // EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
@@ -74892,8 +74897,6 @@ async function issueToTask(payload) {
   const repoName = repository.name;
 
   const name = title;
-
-  console.log(body)
   
   // Build the conversation text
   let conversationText = `**Created by:** [@${user.login}](${user.html_url}) • ${new Date(created_at).toLocaleDateString()}\n`;
@@ -74929,7 +74932,6 @@ async function issueToTask(payload) {
   }
   
   const html_notes = renderMarkdown(conversationText);
-  console.log(html_notes)
 
   return { name, html_notes };
 }
