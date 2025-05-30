@@ -64,8 +64,9 @@ async function syncAllIssues() {
         console.log(`\nProcessing issue #${issue.number}: ${issue.title}`);
         
         // Build the payload similar to webhook
+        // Use 'edited' action to ensure comments are fetched
         const payload = {
-          action: issue.state === 'closed' ? 'closed' : 'opened',
+          action: 'edited',  // This ensures issueToTask will fetch comments
           issue: issue,
           repository: github.context.payload.repository || {
             name: repo,
