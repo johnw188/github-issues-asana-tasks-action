@@ -58724,7 +58724,7 @@ async function findTaskByGithubUrl(githubUrl, workspaceId) {
   try {
     // Search for tasks with this GitHub URL in the custom field
     const searchParams = {
-      "custom_fields.any": `${githubUrlFieldGid}.value.contains="${githubUrl}"`,
+      [`custom_fields.${githubUrlFieldGid}.value`]: githubUrl,
       resource_subtype: "default_task",
       opt_fields: "name,completed,created_at,modified_at,notes,html_notes,permalink_url,gid,custom_fields"
     };
@@ -58771,7 +58771,6 @@ async function findTaskByGithubUrl(githubUrl, workspaceId) {
 async function findTaskContaining(needle, projectId) {
   // If custom field search is available, use it exclusively
   const githubUrlFieldId = process.env.GITHUB_URL_FIELD_ID;
-  console.log("GitHub URL Field ID:", githubUrlFieldId, "Type:", typeof githubUrlFieldId, "Length:", githubUrlFieldId?.length);
   if (githubUrlFieldId && githubUrlFieldId.trim()) {
     try {
       // We need the workspace ID for the search API
@@ -58779,13 +58778,11 @@ async function findTaskContaining(needle, projectId) {
       const projectsApiInstance = (0,asana_client/* getProjectsApi */.l8)();
       const projectOpts = { opt_fields: "workspace" };
       const project = await projectsApiInstance.getProject(projectId, projectOpts);
-      console.log("Project response:", JSON.stringify(project));
       const workspaceId = project.data?.workspace?.gid || project.workspace?.gid;
       
       if (!workspaceId) {
         throw new Error("Could not extract workspace ID from project");
       }
-      console.log("Workspace ID:", workspaceId);
       
       // Search by custom field
       const taskByUrl = await findTaskByGithubUrl(needle, workspaceId);
