@@ -74857,9 +74857,9 @@ function renderMarkdown(rawMd) {
       const trimmedCode = code.replace(/\n$/, '');
       return `<pre>${trimmedCode}</pre>`;
     })
-    // Clean up extra newlines around blockquotes
-    .replace(/\n+<blockquote>/g, '\n<blockquote>')
-    .replace(/<\/blockquote>\n+/g, '</blockquote>\n')
+    // Clean up extra newlines inside blockquotes
+    .replace(/<blockquote>\n/g, '<blockquote>')
+    .replace(/\n<\/blockquote>/g, '</blockquote>')
     .trim();
 
   return `<body>${cleaned}</body>`;
@@ -74895,9 +74895,8 @@ async function issueToTask(payload) {
   
   // Build the conversation text
   let conversationText = `**Created by:** [@${user.login}](${user.html_url}) • ${new Date(created_at).toLocaleDateString()}\n`;
-  conversationText += `**GitHub:** ${html_url}\n\n`;
-  conversationText += `---\n`;
-  conversationText += `${body || '_No description provided_'}\n`;
+  conversationText += `**GitHub:** ${html_url}<hr>`;
+  conversationText += `${body || '_No description provided_'}`;
 
   // Get all comments if this is not an issue creation
   if (payload.action !== "opened") {
@@ -74910,7 +74909,7 @@ async function issueToTask(payload) {
       });
 
       if (comments.length > 0) {
-        conversationText += `\n---\n## Comments\n`;
+        conversationText += `<hr>## Comments`;
         
         for (const comment of comments) {
           const username = comment.user?.login || 'ghost';
