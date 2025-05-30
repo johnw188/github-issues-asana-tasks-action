@@ -58779,7 +58779,13 @@ async function findTaskContaining(needle, projectId) {
       const projectsApiInstance = (0,asana_client/* getProjectsApi */.l8)();
       const projectOpts = { opt_fields: "workspace" };
       const project = await projectsApiInstance.getProject(projectId, projectOpts);
-      const workspaceId = project.workspace.gid;
+      console.log("Project response:", JSON.stringify(project));
+      const workspaceId = project.data?.workspace?.gid || project.workspace?.gid;
+      
+      if (!workspaceId) {
+        throw new Error("Could not extract workspace ID from project");
+      }
+      console.log("Workspace ID:", workspaceId);
       
       // Search by custom field
       const taskByUrl = await findTaskByGithubUrl(needle, workspaceId);
