@@ -74895,7 +74895,7 @@ async function issueToTask(payload) {
   
   // Build the conversation text
   let conversationText = `**Created by:** [@${user.login}](${user.html_url}) • ${new Date(created_at).toLocaleDateString()}\n`;
-  conversationText += `**GitHub:** ${html_url}<hr>  `;
+  conversationText += `**GitHub:** ${html_url}<hr>\n`;
   conversationText += `${body || '_No description provided_'}`;
 
   // Get all comments if this is not an issue creation
@@ -74909,7 +74909,7 @@ async function issueToTask(payload) {
       });
 
       if (comments.length > 0) {
-        conversationText += `<hr>  ## Comments`;
+        conversationText += `<hr>\n## Comments`;
         
         for (const comment of comments) {
           const username = comment.user?.login || 'ghost';
