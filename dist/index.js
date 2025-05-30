@@ -74895,7 +74895,7 @@ async function issueToTask(payload) {
   
   // Build the conversation text
   let conversationText = `**Created by:** [@${user.login}](${user.html_url}) • ${new Date(created_at).toLocaleDateString()}\n`;
-  conversationText += `**GitHub:** ${html_url}<hr>\n`;
+  conversationText += `**GitHub:** ${html_url}<hr><br>`;
   conversationText += `${body || '_No description provided_'}`;
 
   // Get all comments if this is not an issue creation
@@ -74909,15 +74909,15 @@ async function issueToTask(payload) {
       });
 
       if (comments.length > 0) {
-        conversationText += `<hr>\n## Comments`;
+        conversationText += `<hr><br>## Comments<p>`;
         
         for (const comment of comments) {
           const username = comment.user?.login || 'ghost';
           const userUrl = comment.user?.html_url || `https://github.com/${username}`;
           const commentDate = new Date(comment.created_at).toLocaleDateString();
           const commentTime = new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          conversationText += `\n**[@${username}](${userUrl})** • ${commentDate} at ${commentTime}\n`;
-          conversationText += `${comment.body}\n`;
+          conversationText += `**[@${username}](${userUrl})** • ${commentDate} at ${commentTime}<br>`;
+          conversationText += `${comment.body}<p>`;
         }
       }
     } catch (error) {
@@ -74927,6 +74927,7 @@ async function issueToTask(payload) {
   }
   
   const html_notes = renderMarkdown(conversationText);
+  console.log(html_notes)
 
   return { name, html_notes };
 }
