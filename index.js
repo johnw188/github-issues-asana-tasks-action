@@ -23,14 +23,16 @@ try {
   // Get inputs from action
   const projectId = core.getInput('asana_project_id');
   const asanaPat = core.getInput('asana_pat');
-  const customFieldId = core.getInput('asana_custom_field_id');
+  const repositoryFieldId = core.getInput('repository_field_id');
+  const creatorFieldId = core.getInput('creator_field_id');
   const githubToken = core.getInput('github_token');
   
   
   // Set environment variables
   process.env.ASANA_PAT = asanaPat;
   process.env.ASANA_PROJECT_ID = projectId;
-  process.env.ASANA_CUSTOM_FIELD_ID = customFieldId;
+  process.env.REPOSITORY_FIELD_ID = repositoryFieldId;
+  process.env.CREATOR_FIELD_ID = creatorFieldId;
   process.env.GITHUB_TOKEN = githubToken;
   
   // Initialize Asana client after environment variables are set
@@ -55,7 +57,8 @@ try {
     if (action === "opened") {
       const taskContent = await issueToTask(payload);
       const repository = payload.repository.name;
-      result = await createTask(taskContent, projectId, repository);
+      const creator = payload.issue.user.login;
+      result = await createTask(taskContent, projectId, repository, creator);
     } else if (action === "edited") {
       // Update the existing task when issue is edited
       const theTask = await findTaskContaining(issueSearchString, projectId);
@@ -63,7 +66,8 @@ try {
         // Task was deleted, recreate it
         const taskContent = await issueToTask(payload);
         const repository = payload.repository.name;
-        result = await createTask(taskContent, projectId, repository);
+        const creator = payload.issue.user.login;
+        result = await createTask(taskContent, projectId, repository, creator);
       } else {
         const taskContent = await issueToTask(payload);
         result = await updateTaskDescription(theTask.gid, taskContent);
@@ -76,7 +80,8 @@ try {
         // Task was deleted, recreate it and then mark its status
         const taskContent = await issueToTask(payload);
         const repository = payload.repository.name;
-        const newTask = await createTask(taskContent, projectId, repository);
+        const creator = payload.issue.user.login;
+        const newTask = await createTask(taskContent, projectId, repository, creator);
         const completed = !!(action === "closed");
         result = await markTaskComplete(completed, newTask.data.gid);
       } else {
@@ -90,7 +95,8 @@ try {
       // Task was deleted, recreate it with full conversation
       const taskContent = await issueToTask(payload);
       const repository = payload.repository.name;
-      result = await createTask(taskContent, projectId, repository);
+      const creator = payload.issue.user.login;
+      result = await createTask(taskContent, projectId, repository, creator);
     } else {
       // Update task description to include the new comment
       const taskContent = await issueToTask(payload);

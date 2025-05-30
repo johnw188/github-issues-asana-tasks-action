@@ -58438,14 +58438,16 @@ try {
   // Get inputs from action
   const projectId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('asana_project_id');
   const asanaPat = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('asana_pat');
-  const customFieldId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('asana_custom_field_id');
+  const repositoryFieldId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('repository_field_id');
+  const creatorFieldId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('creator_field_id');
   const githubToken = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('github_token');
   
   
   // Set environment variables
   process.env.ASANA_PAT = asanaPat;
   process.env.ASANA_PROJECT_ID = projectId;
-  process.env.ASANA_CUSTOM_FIELD_ID = customFieldId;
+  process.env.REPOSITORY_FIELD_ID = repositoryFieldId;
+  process.env.CREATOR_FIELD_ID = creatorFieldId;
   process.env.GITHUB_TOKEN = githubToken;
   
   // Initialize Asana client after environment variables are set
@@ -58470,7 +58472,8 @@ try {
     if (action === "opened") {
       const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
       const repository = payload.repository.name;
-      result = await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repository);
+      const creator = payload.issue.user.login;
+      result = await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repository, creator);
     } else if (action === "edited") {
       // Update the existing task when issue is edited
       const theTask = await (0,_lib_asana_task_find_js__WEBPACK_IMPORTED_MODULE_2__/* .findTaskContaining */ .l)(issueSearchString, projectId);
@@ -58478,7 +58481,8 @@ try {
         // Task was deleted, recreate it
         const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
         const repository = payload.repository.name;
-        result = await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repository);
+        const creator = payload.issue.user.login;
+        result = await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repository, creator);
       } else {
         const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
         result = await (0,_lib_asana_task_update_description_js__WEBPACK_IMPORTED_MODULE_6__/* .updateTaskDescription */ .$)(theTask.gid, taskContent);
@@ -58491,7 +58495,8 @@ try {
         // Task was deleted, recreate it and then mark its status
         const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
         const repository = payload.repository.name;
-        const newTask = await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repository);
+        const creator = payload.issue.user.login;
+        const newTask = await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repository, creator);
         const completed = !!(action === "closed");
         result = await (0,_lib_asana_task_completed_js__WEBPACK_IMPORTED_MODULE_3__/* .markTaskComplete */ .T)(completed, newTask.data.gid);
       } else {
@@ -58505,7 +58510,8 @@ try {
       // Task was deleted, recreate it with full conversation
       const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
       const repository = payload.repository.name;
-      result = await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repository);
+      const creator = payload.issue.user.login;
+      result = await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repository, creator);
     } else {
       // Update task description to include the new comment
       const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
@@ -58776,26 +58782,36 @@ function getColorForRepository(repository) {
  * @param {{name: string, html_notes: string}} content The contents of the task
  * @param {string} projectId numeric string of the project to put this task in
  * @param {string} repository The GitHub repository name
+ * @param {string} creator The GitHub username of the issue creator
  */
-async function createTask(content, projectId, repository) {
-  // Find or create the repository custom field option
-  const customFieldGid = process.env.ASANA_CUSTOM_FIELD_ID;
+async function createTask(content, projectId, repository, creator) {
+  // Get custom field IDs from environment
+  const repositoryFieldGid = process.env.REPOSITORY_FIELD_ID;
+  const creatorFieldGid = process.env.CREATOR_FIELD_ID;
   
   let customFields = {};
-  if (customFieldGid && repository) {
-    const optionGid = await getCustomFieldForProject(customFieldGid, repository);
-    customFields = {
-      custom_fields: {
-        [customFieldGid]: optionGid
-      }
-    };
+  
+  // Add repository field if configured
+  if (repositoryFieldGid && repository) {
+    const optionGid = await getCustomFieldForProject(repositoryFieldGid, repository);
+    customFields[repositoryFieldGid] = optionGid;
   }
+  
+  // Add creator field if configured
+  if (creatorFieldGid && creator) {
+    customFields[creatorFieldGid] = `@${creator}`;
+  }
+  
+  // Only add custom_fields if we have any
+  const customFieldsWrapper = Object.keys(customFields).length > 0 
+    ? { custom_fields: customFields }
+    : {};
   
   const task_data = { 
     data: { 
       ...content, 
       projects: [projectId],
-      ...customFields
+      ...customFieldsWrapper
     } 
   };
   const opts = { opt_fields: "permalink_url" };
@@ -58803,8 +58819,6 @@ async function createTask(content, projectId, repository) {
   try {
     const tasksApiInstance = (0,asana_client/* getTasksApi */.$W)();
     const result = await tasksApiInstance.createTask(task_data, opts);
-
-    console.log({ result });
     return result.data.permalink_url;
   } catch (error) {
     console.error(error.response.status, error.response.body);

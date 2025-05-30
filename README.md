@@ -9,6 +9,7 @@ This integration creates Asana Tasks from GitHub issues in a single designated A
 - Creates tasks in a single Asana project for all GitHub issues
 - Includes the entire issue conversation (description + comments) in the task description
 - Sets a custom field with the repository name (automatically creates new options as needed)
+- Sets a custom field with the issue creator's GitHub username
 - Updates task description when issues are edited or new comments are added
 - Marks tasks complete/incomplete when issues are closed/reopened
 
@@ -50,7 +51,8 @@ jobs:
         with:
           asana_pat: ${{ secrets.ASANA_PAT }}
           asana_project_id: '1234567890123456'  # Your Asana project ID
-          asana_custom_field_id: '1234567890123456'  # Optional: Custom field for repository name
+          repository_field_id: '1234567890123456'  # Optional: Custom field for repository name
+          creator_field_id: '1234567890123456'  # Optional: Custom field for issue creator
 ```
 
 ## How it works
@@ -60,6 +62,7 @@ After adding the GitHub Action to a repository, you need to:
 1. Store an [Asana Personal Access Token](https://developers.asana.com/docs/personal-access-token) as a **GitHub Secret** named **`ASANA_PAT`**
 2. Configure the action with your Asana project ID
 3. Optionally, create a single-select custom field in your Asana project for repository names and provide its ID
+4. Optionally, create a text custom field in your Asana project for issue creators and provide its ID
 
 - **On Issue Creation**<br>
   Creates a new Task in the configured Asana project. The task description includes the issue details, author information, and a link back to the GitHub issue.
