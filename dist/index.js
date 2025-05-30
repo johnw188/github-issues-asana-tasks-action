@@ -58732,7 +58732,7 @@ async function findTaskByGithubUrl(githubUrl, workspaceId) {
     const results = await tasksApiInstance.searchTasksForWorkspace(workspaceId, searchParams);
     
     // Get the first matching task
-    for (const task of results) {
+    for (const task of results.data) {
       // Double-check the custom field value matches exactly
       const customFields = task.custom_fields || [];
       const githubUrlField = customFields.find(f => f.gid === githubUrlFieldGid);
