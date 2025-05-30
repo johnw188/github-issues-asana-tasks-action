@@ -74851,6 +74851,8 @@ function renderMarkdown(rawMd) {
     .replace(/<input\s+type="checkbox"\s+disabled=""\s+checked=""\s*\/>/g, "[x]") // Replace checked checkboxes
     .replace(/<input\s+type="checkbox"\s+disabled=""\s*\/>/g, "[ ]") // Replace unchecked checkboxes
     .replace(/href="((?!https?:\/\/)[^"]+)"/g, 'href="https://$1"') // Add https:// to links without protocol
+    // Convert <pre><code> to just <pre> (Asana doesn't support nested code in pre)
+    .replace(/<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/g, '<pre>$1</pre>')
     .trim();
 
   return `<body>${cleaned}</body>`;
