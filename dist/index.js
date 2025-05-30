@@ -74899,7 +74899,21 @@ async function issueToTask(payload) {
   const name = title;
   
   // Build the conversation text
-  let conversationText = `**Created by:** [@${user.login}](${user.html_url}) • ${new Date(created_at).toLocaleDateString()}\n`;
+  const createdDate = new Date(created_at);
+  const pstDate = createdDate.toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' });
+  const pstTime = createdDate.toLocaleTimeString('en-US', { 
+    timeZone: 'America/Los_Angeles', 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: true 
+  });
+  const ukTime = createdDate.toLocaleTimeString('en-GB', { 
+    timeZone: 'Europe/London', 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: false 
+  });
+  let conversationText = `**Created by:** [@${user.login}](${user.html_url}) • ${pstDate} at ${pstTime} PST (${ukTime} GMT)\n`;
   conversationText += `**GitHub:** ${html_url}<hr>\n\n`;
   conversationText += `${body || '_No description provided_'}`;
 
@@ -74919,9 +74933,23 @@ async function issueToTask(payload) {
         for (const comment of comments) {
           const username = comment.user?.login || 'ghost';
           const userUrl = comment.user?.html_url || `https://github.com/${username}`;
-          const commentDate = new Date(comment.created_at).toLocaleDateString();
-          const commentTime = new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          conversationText += `**[@${username}](${userUrl})** • ${commentDate} at ${commentTime}\n`;
+          
+          const commentDateTime = new Date(comment.created_at);
+          const commentPstDate = commentDateTime.toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' });
+          const commentPstTime = commentDateTime.toLocaleTimeString('en-US', { 
+            timeZone: 'America/Los_Angeles', 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true 
+          });
+          const commentUkTime = commentDateTime.toLocaleTimeString('en-GB', { 
+            timeZone: 'Europe/London', 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          });
+          
+          conversationText += `**[@${username}](${userUrl})** • ${commentPstDate} at ${commentPstTime} PST (${commentUkTime} GMT)\n`;
           conversationText += `${comment.body}\n\n`;
         }
       }
