@@ -58474,23 +58474,45 @@ try {
     } else if (action === "edited") {
       // Update the existing task when issue is edited
       const theTask = await (0,_lib_asana_task_find_js__WEBPACK_IMPORTED_MODULE_2__/* .findTaskContaining */ .l)(issueSearchString, projectId);
-      const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
-      result = await (0,_lib_asana_task_update_description_js__WEBPACK_IMPORTED_MODULE_6__/* .updateTaskDescription */ .$)(theTask.gid, taskContent);
+      if (!theTask) {
+        // Task was deleted, recreate it
+        const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
+        const repository = payload.repository.name;
+        result = await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repository);
+      } else {
+        const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
+        result = await (0,_lib_asana_task_update_description_js__WEBPACK_IMPORTED_MODULE_6__/* .updateTaskDescription */ .$)(theTask.gid, taskContent);
+      }
     } else if (action === "closed" || action === "reopened") {
       // mark action completed = true, or incomplete = false)
 
       const theTask = await (0,_lib_asana_task_find_js__WEBPACK_IMPORTED_MODULE_2__/* .findTaskContaining */ .l)(issueSearchString, projectId);
-      const completed = !!(action === "closed");
-      result = await (0,_lib_asana_task_completed_js__WEBPACK_IMPORTED_MODULE_3__/* .markTaskComplete */ .T)(completed, theTask.gid);
+      if (!theTask) {
+        // Task was deleted, recreate it and then mark its status
+        const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
+        const repository = payload.repository.name;
+        const newTask = await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repository);
+        const completed = !!(action === "closed");
+        result = await (0,_lib_asana_task_completed_js__WEBPACK_IMPORTED_MODULE_3__/* .markTaskComplete */ .T)(completed, newTask.data.gid);
+      } else {
+        const completed = !!(action === "closed");
+        result = await (0,_lib_asana_task_completed_js__WEBPACK_IMPORTED_MODULE_3__/* .markTaskComplete */ .T)(completed, theTask.gid);
+      }
     }
   } else if (eventName === "issue_comment" && action === "created") {
     const theTask = await (0,_lib_asana_task_find_js__WEBPACK_IMPORTED_MODULE_2__/* .findTaskContaining */ .l)(issueSearchString, projectId);
-    // Update task description to include the new comment
-    const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
-    result = await (0,_lib_asana_task_update_description_js__WEBPACK_IMPORTED_MODULE_6__/* .updateTaskDescription */ .$)(theTask.gid, taskContent);
+    if (!theTask) {
+      // Task was deleted, recreate it with full conversation
+      const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
+      const repository = payload.repository.name;
+      result = await (0,_lib_asana_task_create_js__WEBPACK_IMPORTED_MODULE_4__/* .createTask */ .v)(taskContent, projectId, repository);
+    } else {
+      // Update task description to include the new comment
+      const taskContent = await (0,_lib_util_issue_to_task_js__WEBPACK_IMPORTED_MODULE_7__/* .issueToTask */ .U)(payload);
+      result = await (0,_lib_asana_task_update_description_js__WEBPACK_IMPORTED_MODULE_6__/* .updateTaskDescription */ .$)(theTask.gid, taskContent);
+    }
   }
 
-  console.log({ eventName, action, result });
 
   if (result.errors) {
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(JSON.stringify(result, null, 2));

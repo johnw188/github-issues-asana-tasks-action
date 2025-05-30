@@ -59,23 +59,45 @@ try {
     } else if (action === "edited") {
       // Update the existing task when issue is edited
       const theTask = await findTaskContaining(issueSearchString, projectId);
-      const taskContent = await issueToTask(payload);
-      result = await updateTaskDescription(theTask.gid, taskContent);
+      if (!theTask) {
+        // Task was deleted, recreate it
+        const taskContent = await issueToTask(payload);
+        const repository = payload.repository.name;
+        result = await createTask(taskContent, projectId, repository);
+      } else {
+        const taskContent = await issueToTask(payload);
+        result = await updateTaskDescription(theTask.gid, taskContent);
+      }
     } else if (action === "closed" || action === "reopened") {
       // mark action completed = true, or incomplete = false)
 
       const theTask = await findTaskContaining(issueSearchString, projectId);
-      const completed = !!(action === "closed");
-      result = await markTaskComplete(completed, theTask.gid);
+      if (!theTask) {
+        // Task was deleted, recreate it and then mark its status
+        const taskContent = await issueToTask(payload);
+        const repository = payload.repository.name;
+        const newTask = await createTask(taskContent, projectId, repository);
+        const completed = !!(action === "closed");
+        result = await markTaskComplete(completed, newTask.data.gid);
+      } else {
+        const completed = !!(action === "closed");
+        result = await markTaskComplete(completed, theTask.gid);
+      }
     }
   } else if (eventName === "issue_comment" && action === "created") {
     const theTask = await findTaskContaining(issueSearchString, projectId);
-    // Update task description to include the new comment
-    const taskContent = await issueToTask(payload);
-    result = await updateTaskDescription(theTask.gid, taskContent);
+    if (!theTask) {
+      // Task was deleted, recreate it with full conversation
+      const taskContent = await issueToTask(payload);
+      const repository = payload.repository.name;
+      result = await createTask(taskContent, projectId, repository);
+    } else {
+      // Update task description to include the new comment
+      const taskContent = await issueToTask(payload);
+      result = await updateTaskDescription(theTask.gid, taskContent);
+    }
   }
 
-  console.log({ eventName, action, result });
 
   if (result.errors) {
     core.setFailed(JSON.stringify(result, null, 2));
