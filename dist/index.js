@@ -58702,7 +58702,10 @@ async function findTaskContaining(needle, projectId) {
 
     while (!foundTask) {
       for (let n = 0; n < tasks.length; n++) {
-        const search = tasks[n].html_notes.indexOf(needle);
+        // Look for the specific pattern "GitHub:</strong> <a href="[needle]"
+        // This ensures we only match the header link, not comment links
+        const pattern = `GitHub:</strong> <a href="${needle}"`;
+        const search = tasks[n].html_notes.indexOf(pattern);
         tasksSearched++;
         // console.log({ indexOf: search, gid: tasks[n].gid, tasksSearched });
         if (search > -1) {
@@ -74797,7 +74800,7 @@ async function issueToTask(payload) {
             hour12: false 
           });
           
-          conversationText += `**[@${username}](${userUrl})** • ${commentPstDate} at ${commentPstTime} PST (${commentUkTime} GMT)\n`;
+          conversationText += `**[@${username}](${comment.html_url})** • ${commentPstDate} at ${commentPstTime} PST (${commentUkTime} GMT)\n`;
           conversationText += `${comment.body}\n\n`;
         }
       }
