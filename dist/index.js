@@ -58642,7 +58642,7 @@ async function createTask(content, projectId, repository, creator, githubUrl) {
   let customFields = {};
   
   // Add repository field if configured
-  if (repositoryFieldGid && repository) {
+  if (repositoryFieldGid && repositoryFieldGid.trim() && repository) {
     const optionGid = await getCustomFieldForProject(repositoryFieldGid, repository);
     customFields[repositoryFieldGid] = optionGid;
   }
@@ -58715,7 +58715,7 @@ async function findTaskByGithubUrl(githubUrl, workspaceId) {
   const githubUrlFieldGid = process.env.GITHUB_URL_FIELD_ID;
   
   // If no custom field is configured, return null
-  if (!githubUrlFieldGid) {
+  if (!githubUrlFieldGid || !githubUrlFieldGid.trim()) {
     return null;
   }
   
@@ -58771,7 +58771,8 @@ async function findTaskByGithubUrl(githubUrl, workspaceId) {
 async function findTaskContaining(needle, projectId) {
   // If custom field search is available, use it exclusively
   const githubUrlFieldId = process.env.GITHUB_URL_FIELD_ID;
-  if (githubUrlFieldId) {
+  console.log("GitHub URL Field ID:", githubUrlFieldId, "Type:", typeof githubUrlFieldId, "Length:", githubUrlFieldId?.length);
+  if (githubUrlFieldId && githubUrlFieldId.trim()) {
     try {
       // We need the workspace ID for the search API
       // Get it from the project
