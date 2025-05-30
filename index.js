@@ -26,12 +26,6 @@ try {
   const customFieldId = core.getInput('asana_custom_field_id');
   const githubToken = core.getInput('github_token');
   
-  // Debug logging
-  console.log('Input values:');
-  console.log('- asana_project_id:', projectId ? `${projectId.length} chars` : 'missing');
-  console.log('- asana_pat:', asanaPat ? `${asanaPat.length} chars` : 'missing');
-  console.log('- asana_custom_field_id:', customFieldId ? `${customFieldId.length} chars` : 'missing');
-  console.log('- github_token:', githubToken ? `${githubToken.length} chars` : 'missing');
   
   // Set environment variables
   process.env.ASANA_PAT = asanaPat;
@@ -44,7 +38,6 @@ try {
   
   const issueSearchString = payload.issue?.html_url;
 
-  console.log({ projectId, eventName, action });
 
   if (!projectId) {
     throw new Error("ASANA_PROJECT_ID environment variable is not set");

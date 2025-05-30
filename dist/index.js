@@ -58441,12 +58441,6 @@ try {
   const customFieldId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('asana_custom_field_id');
   const githubToken = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('github_token');
   
-  // Debug logging
-  console.log('Input values:');
-  console.log('- asana_project_id:', projectId ? `${projectId.length} chars` : 'missing');
-  console.log('- asana_pat:', asanaPat ? `${asanaPat.length} chars` : 'missing');
-  console.log('- asana_custom_field_id:', customFieldId ? `${customFieldId.length} chars` : 'missing');
-  console.log('- github_token:', githubToken ? `${githubToken.length} chars` : 'missing');
   
   // Set environment variables
   process.env.ASANA_PAT = asanaPat;
@@ -58459,7 +58453,6 @@ try {
   
   const issueSearchString = payload.issue?.html_url;
 
-  console.log({ projectId, eventName, action });
 
   if (!projectId) {
     throw new Error("ASANA_PROJECT_ID environment variable is not set");
@@ -58543,10 +58536,6 @@ function initializeAsanaClient() {
   const token = client.authentications["token"];
   token.accessToken = process.env.ASANA_PAT;
   
-  // Debug logging
-  console.log("Initializing Asana client");
-  console.log("ASANA_PAT present:", !!process.env.ASANA_PAT);
-  console.log("ASANA_PAT length:", process.env.ASANA_PAT ? process.env.ASANA_PAT.length : 0);
   
   tasksApiInstance = new asana__WEBPACK_IMPORTED_MODULE_0__/* .TasksApi */ .Uw();
   customFieldsApiInstance = new asana__WEBPACK_IMPORTED_MODULE_0__/* .CustomFieldsApi */ .fK();
@@ -74842,11 +74831,6 @@ function renderMarkdown(rawMd) {
     .replace(/href="((?!https?:\/\/)[^"]+)"/g, 'href="https://$1"') // Add https:// to links without protocol
     .trim();
 
-  console.log({
-    rendered: JSON.stringify(rendered),
-    cleaned: JSON.stringify(cleaned),
-  });
-
   return `<body>${cleaned}</body>`;
 }
 
@@ -74871,43 +74855,22 @@ var github = __nccwpck_require__(5438);
  * @returns {Promise<object>}
  */
 async function issueToTask(payload) {
-  console.log("issueToTask - full payload:", JSON.stringify(payload, null, 2));
-  
   const { title, number, body, html_url, user, created_at, updated_at } = payload.issue;
   const repository = payload.repository;
   const owner = repository.owner;
   const repoName = repository.name;
 
-  console.log("issueToTask - extracted values:", {
-    repositoryName: repoName,
-    ownerLogin: owner.login,
-    issueNumber: number,
-    issueTitle: title
-  });
-
-  const name = `${title} #${number}`;
+  const name = title;
   
   // Build the conversation text
-  let conversationText = `# ${title}\n\n`;
-  conversationText += `**Created by:** [@${user.login}](${user.html_url})\n`;
-  conversationText += `**Created at:** ${new Date(created_at).toLocaleString()}\n`;
-  if (updated_at !== created_at) {
-    conversationText += `**Updated at:** ${new Date(updated_at).toLocaleString()}\n`;
-  }
-  conversationText += `**GitHub Issue:** ${html_url}\n\n`;
+  let conversationText = `**Created by:** [@${user.login}](${user.html_url}) • ${new Date(created_at).toLocaleDateString()}\n`;
+  conversationText += `**GitHub:** ${html_url}\n\n`;
   conversationText += `---\n\n`;
-  conversationText += `## Issue Description\n\n${body || '_No description provided_'}\n\n`;
+  conversationText += `${body || '_No description provided_'}\n\n`;
 
   // Get all comments if this is not an issue creation
   if (payload.action !== "opened") {
     try {
-      console.log("Fetching comments for issue:", {
-        owner: owner.login,
-        repo: repoName,
-        issue_number: number,
-        hasGithubToken: !!process.env.GITHUB_TOKEN
-      });
-      
       const octokit = (0,github.getOctokit)(process.env.GITHUB_TOKEN);
       const { data: comments } = await octokit.rest.issues.listComments({
         owner: owner.login,
@@ -74915,34 +74878,20 @@ async function issueToTask(payload) {
         issue_number: number
       });
 
-      console.log(`Fetched ${comments.length} comments`);
-
       if (comments.length > 0) {
         conversationText += `---\n\n## Comments\n\n`;
         
         for (const comment of comments) {
-          console.log("Processing comment:", {
-            id: comment.id,
-            hasUser: !!comment.user,
-            userLogin: comment.user?.login,
-            created_at: comment.created_at
-          });
-          
           const username = comment.user?.login || 'ghost';
           const userUrl = comment.user?.html_url || `https://github.com/${username}`;
-          conversationText += `### [@${username}](${userUrl}) - ${new Date(comment.created_at).toLocaleString()}\n\n`;
+          const commentDate = new Date(comment.created_at).toLocaleDateString();
+          const commentTime = new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          conversationText += `**[@${username}](${userUrl})** • ${commentDate} at ${commentTime}\n\n`;
           conversationText += `${comment.body}\n\n`;
-          conversationText += `[View comment](${comment.html_url})\n\n`;
-          conversationText += `---\n\n`;
         }
       }
     } catch (error) {
       console.error("Error fetching comments:", error);
-      console.error("Error details:", {
-        message: error.message,
-        stack: error.stack,
-        response: error.response?.data
-      });
       conversationText += `\n\n_Error fetching comments from GitHub_\n`;
     }
   }
