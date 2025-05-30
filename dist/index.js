@@ -19737,12 +19737,12 @@ __webpack_unused_export__ = ({
     return _ProjectTemplatesApi.ProjectTemplatesApi;
   }
 });
-__webpack_unused_export__ = ({
+Object.defineProperty(exports, "lV", ({
   enumerable: true,
   get: function get() {
     return _ProjectsApi.ProjectsApi;
   }
-});
+}));
 __webpack_unused_export__ = ({
   enumerable: true,
   get: function get() {
@@ -58406,7 +58406,8 @@ module.exports = parseParams
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
 /* harmony export */   "$W": () => (/* binding */ getTasksApi),
 /* harmony export */   "V0": () => (/* binding */ initializeAsanaClient),
-/* harmony export */   "aW": () => (/* binding */ getCustomFieldsApi)
+/* harmony export */   "aW": () => (/* binding */ getCustomFieldsApi),
+/* harmony export */   "l8": () => (/* binding */ getProjectsApi)
 /* harmony export */ });
 /* unused harmony export getStoriesApi */
 /* harmony import */ var asana__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(576);
@@ -58418,6 +58419,7 @@ let initialized = false;
 let tasksApiInstance;
 let customFieldsApiInstance;
 let storiesApiInstance;
+let projectsApiInstance;
 
 /**
  * Initialize the Asana client with the PAT from environment
@@ -58436,6 +58438,7 @@ function initializeAsanaClient() {
   tasksApiInstance = new asana__WEBPACK_IMPORTED_MODULE_0__/* .TasksApi */ .Uw();
   customFieldsApiInstance = new asana__WEBPACK_IMPORTED_MODULE_0__/* .CustomFieldsApi */ .fK();
   storiesApiInstance = new asana__WEBPACK_IMPORTED_MODULE_0__/* .StoriesApi */ .Or();
+  projectsApiInstance = new asana__WEBPACK_IMPORTED_MODULE_0__/* .ProjectsApi */ .lV();
   
   initialized = true;
 }
@@ -58471,6 +58474,17 @@ function getStoriesApi() {
     throw new Error("Asana client not initialized. Call initializeAsanaClient() first.");
   }
   return storiesApiInstance;
+}
+
+/**
+ * Get the Projects API instance
+ * @returns {ProjectsApi}
+ */
+function getProjectsApi() {
+  if (!initialized) {
+    throw new Error("Asana client not initialized. Call initializeAsanaClient() first.");
+  }
+  return projectsApiInstance;
 }
 
 /***/ }),
@@ -58670,13 +58684,75 @@ async function createTask(content, projectId, repository, creator, githubUrl) {
 
 /***/ }),
 
-/***/ 7902:
+/***/ 1172:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
 
-/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   "l": () => (/* binding */ findTaskContaining)
-/* harmony export */ });
-/* harmony import */ var _asana_client_js__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2190);
+
+// EXPORTS
+__nccwpck_require__.d(__webpack_exports__, {
+  "l": () => (/* binding */ findTaskContaining)
+});
+
+// EXTERNAL MODULE: ./lib/asana-client.js
+var asana_client = __nccwpck_require__(2190);
+;// CONCATENATED MODULE: ./lib/asana-task-find-by-url.js
+// @ts-check
+
+/**
+ * This searches for tasks using Asana's search API to find tasks
+ * with a specific GitHub URL in a custom field.
+ */
+
+
+
+/**
+ * Search for a task by GitHub URL using custom field
+ * @param {string} githubUrl The GitHub issue URL to search for
+ * @param {string} workspaceId The workspace to search in
+ * @returns {Promise<object|null>} The task if found, null otherwise
+ */
+async function findTaskByGithubUrl(githubUrl, workspaceId) {
+  const githubUrlFieldGid = process.env.GITHUB_URL_FIELD_ID;
+  
+  // If no custom field is configured, return null
+  if (!githubUrlFieldGid) {
+    return null;
+  }
+  
+  const tasksApiInstance = (0,asana_client/* getTasksApi */.$W)();
+  
+  try {
+    // Search for tasks with this GitHub URL in the custom field
+    const searchParams = {
+      "custom_fields.any": `${githubUrlFieldGid}.value.contains="${githubUrl}"`,
+      resource_subtype: "default_task",
+      opt_fields: "name,completed,created_at,modified_at,notes,html_notes,permalink_url,gid,custom_fields"
+    };
+    
+    const results = await tasksApiInstance.searchTasksForWorkspace(workspaceId, searchParams);
+    
+    // Get the first matching task
+    for (const task of results) {
+      // Double-check the custom field value matches exactly
+      const customFields = task.custom_fields || [];
+      const githubUrlField = customFields.find(f => f.gid === githubUrlFieldGid);
+      
+      if (githubUrlField && githubUrlField.text_value === githubUrl) {
+        console.log(`Found task by GitHub URL: ${task.gid}`);
+        return task;
+      }
+    }
+    
+    console.log(`No task found with GitHub URL: ${githubUrl}`);
+    return null;
+    
+  } catch (error) {
+    console.error("Error searching for task by GitHub URL:", error.message);
+    // Fall back to null if search fails
+    return null;
+  }
+}
+;// CONCATENATED MODULE: ./lib/asana-task-find.js
 // @ts-check
 
 /**
@@ -58686,13 +58762,37 @@ async function createTask(content, projectId, repository, creator, githubUrl) {
 
 
 
+
 /**
  * Search Project tasks for a note containing a given string
  * @param {string} needle string to search for in Task notes
  * @param {string} projectId numeric string gid of the project to search in
  */
 async function findTaskContaining(needle, projectId) {
-  const tasksApiInstance = (0,_asana_client_js__WEBPACK_IMPORTED_MODULE_0__/* .getTasksApi */ .$W)();
+  // If custom field search is available, use it exclusively
+  const githubUrlFieldId = process.env.GITHUB_URL_FIELD_ID;
+  if (githubUrlFieldId) {
+    try {
+      // We need the workspace ID for the search API
+      // Get it from the project
+      const projectsApiInstance = (0,asana_client/* getProjectsApi */.l8)();
+      const projectOpts = { opt_fields: "workspace" };
+      const project = await projectsApiInstance.getProject(projectId, projectOpts);
+      const workspaceId = project.workspace.gid;
+      
+      // Search by custom field
+      const taskByUrl = await findTaskByGithubUrl(needle, workspaceId);
+      console.log(taskByUrl ? "Found task using custom field search" : "No task found with GitHub URL");
+      return taskByUrl;
+    } catch (error) {
+      console.error("Custom field search error:", error.message);
+      return null;
+    }
+  }
+  
+  // Only use full scan if no custom field is configured
+  console.log("No GitHub URL field configured, using full project scan");
+  const tasksApiInstance = (0,asana_client/* getTasksApi */.$W)();
   
   let taskRequests = 1;
   let tasksSearched = 0;
@@ -74990,8 +75090,8 @@ var __webpack_exports__ = {};
 var core = __nccwpck_require__(2186);
 // EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
 var github = __nccwpck_require__(5438);
-// EXTERNAL MODULE: ./lib/asana-task-find.js
-var asana_task_find = __nccwpck_require__(7902);
+// EXTERNAL MODULE: ./lib/asana-task-find.js + 1 modules
+var asana_task_find = __nccwpck_require__(1172);
 // EXTERNAL MODULE: ./lib/asana-task-completed.js
 var asana_task_completed = __nccwpck_require__(2798);
 // EXTERNAL MODULE: ./lib/asana-task-create.js + 1 modules
