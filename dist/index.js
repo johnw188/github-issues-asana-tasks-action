@@ -74892,6 +74892,8 @@ async function issueToTask(payload) {
   const repoName = repository.name;
 
   const name = title;
+
+  console.log(body)
   
   // Build the conversation text
   let conversationText = `**Created by:** [@${user.login}](${user.html_url}) • ${new Date(created_at).toLocaleDateString()}\n`;
@@ -74909,7 +74911,7 @@ async function issueToTask(payload) {
       });
 
       if (comments.length > 0) {
-        conversationText += `<hr><h2>## Comments</h2>\n\n`;
+        conversationText += `<hr><h2>Comments</h2>\n\n`;
         
         for (const comment of comments) {
           const username = comment.user?.login || 'ghost';
