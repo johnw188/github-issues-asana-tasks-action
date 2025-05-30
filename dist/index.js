@@ -74857,6 +74857,9 @@ function renderMarkdown(rawMd) {
       const trimmedCode = code.replace(/\n$/, '');
       return `<pre>${trimmedCode}</pre>`;
     })
+    // Clean up extra newlines around blockquotes
+    .replace(/\n+<blockquote>/g, '\n<blockquote>')
+    .replace(/<\/blockquote>\n+/g, '</blockquote>\n')
     .trim();
 
   return `<body>${cleaned}</body>`;
