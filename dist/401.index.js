@@ -36,6 +36,7 @@ async function syncAllIssues() {
     const asanaPat = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('asana_pat');
     const repositoryFieldId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('repository_field_id');
     const creatorFieldId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('creator_field_id');
+    const githubUrlFieldId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('github_url_field_id');
     const githubToken = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('github_token');
     const syncClosed = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('sync_closed_issues') === 'true';
     
@@ -44,6 +45,7 @@ async function syncAllIssues() {
     process.env.ASANA_PROJECT_ID = projectId;
     process.env.REPOSITORY_FIELD_ID = repositoryFieldId;
     process.env.CREATOR_FIELD_ID = creatorFieldId;
+    process.env.GITHUB_URL_FIELD_ID = githubUrlFieldId;
     process.env.GITHUB_TOKEN = githubToken;
     
     // Initialize Asana client after environment variables are set
